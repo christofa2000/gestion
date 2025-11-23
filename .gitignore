@@ -42,3 +42,12 @@ next-env.d.ts
 
 # Carpeta vieja (ignorar)
 gestion/
+
+# Archivos de documentación temporal (no subir a GitHub)
+PROYECTO-CREADO.md
+ARCHIVOS_CREADOS.md
+ESTRUCTURA-DEL-PROYECTO.md
+REORGANIZACION-COMPLETADA.md
+RESUMEN-REORGANIZACION.md
+GIT-COMMITS.md
+SUBIR-A-GITHUB.md
