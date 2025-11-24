@@ -1,134 +1,152 @@
-export default function PagosPage() {
+/**
+ * Página: Lista de Pagos
+ * 
+ * Muestra todos los pagos (ingresos) del club
+ */
+
+import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createClient, getUser } from '@repo/supabase/server'
+import { canAccessAdmin, getClubId } from '@/lib/auth'
+import { DollarSign, Plus } from 'lucide-react'
+import { PagosTable } from './components/PagosTable'
+import { PagosFilters } from './components/PagosFilters'
+
+interface PageProps {
+  searchParams: {
+    desde?: string
+    hasta?: string
+    alumno?: string
+    categoria?: string
+    page?: string
+  }
+}
+
+export default async function PagosPage({ searchParams }: PageProps) {
+  const user = await getUser()
+  
+  if (!user || !canAccessAdmin(user)) {
+    redirect('/auth/login')
+  }
+
+  const clubId = getClubId(user)
+  
+  if (!clubId) {
+    return <div className="p-6">Error: No se pudo obtener el club del usuario</div>
+  }
+
+  // Parámetros
+  const desde = searchParams.desde || ''
+  const hasta = searchParams.hasta || ''
+  const alumnoId = searchParams.alumno || ''
+  const categoriaId = searchParams.categoria || ''
+  const page = parseInt(searchParams.page || '1', 10)
+  const perPage = 20
+
+  const supabase = await createClient()
+  
+  let query = supabase
+    .from('payments')
+    .select(`
+      *,
+      students:student_id(id, nombre, apellido),
+      payment_categories:categoria_id(id, nombre),
+      payment_methods:medio_pago_id(id, nombre)
+    `, { count: 'exact' })
+    .eq('club_id', clubId)
+    .order('fecha_pago', { ascending: false })
+
+  if (desde) query = query.gte('fecha_pago', desde)
+  if (hasta) query = query.lte('fecha_pago', hasta)
+  if (alumnoId) query = query.eq('student_id', alumnoId)
+  if (categoriaId) query = query.eq('categoria_id', categoriaId)
+
+  const start = (page - 1) * perPage
+  query = query.range(start, start + perPage - 1)
+
+  const { data: pagos, error, count } = await query
+
+  if (error) {
+    console.error('Error fetching payments:', error)
+  }
+
+  // Calcular total
+  const total = pagos?.reduce((sum, p) => sum + (p.monto || 0), 0) || 0
+  const totalPages = count ? Math.ceil(count / perPage) : 0
+
+  // Obtener opciones para filtros
+  const [estudiantes, categorias] = await Promise.all([
+    supabase.from('students').select('id, nombre, apellido').eq('club_id', clubId).limit(100),
+    supabase.from('payment_categories').select('id, nombre').eq('club_id', clubId),
+  ])
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            Gestión de Pagos
+          <h1 className="text-3xl font-bold text-[var(--color-text-main)]">
+            Pagos e Ingresos
           </h1>
-          <p style={{ color: "var(--color-text-muted)" }}>
-            Control de ingresos y cobros
+          <p className="text-[var(--color-text-muted)] mt-1">
+            Gestiona los ingresos del club
           </p>
         </div>
-        <button
-          className="px-4 py-2 rounded-lg font-medium text-white"
-          style={{ backgroundColor: "var(--color-primary)" }}
-        >
-          + Registrar Pago
-        </button>
+        
+        <Link href="/admin/pagos/nuevo">
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-[var(--color-primary-hover)] transition-colors">
+            <Plus className="w-5 h-5" />
+            Registrar Pago
+          </button>
+        </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Total Cobrado (Mes)
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-success)" }}>
-            $45,290
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-[var(--color-surface)] p-4 rounded-lg border border-[var(--color-border)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[var(--color-text-main)]">
+                ${total.toLocaleString()}
+              </p>
+              <p className="text-sm text-[var(--color-text-muted)]">Total Período</p>
+            </div>
+          </div>
         </div>
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Pagos Pendientes
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-warning)" }}>
-            $8,500
-          </p>
-        </div>
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Total Pagos
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            156
-          </p>
+        <div className="bg-[var(--color-surface)] p-4 rounded-lg border border-[var(--color-border)]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[var(--color-text-main)]">{count || 0}</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Total Pagos</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Payments Table */}
-      <div
-        className="rounded-xl border overflow-hidden"
-        style={{
-          backgroundColor: "var(--color-surface)",
-          borderColor: "var(--color-border-subtle)",
-        }}
-      >
-        <table className="w-full">
-          <thead style={{ backgroundColor: "var(--color-bg)" }}>
-            <tr>
-              <th className="text-left px-6 py-4 text-sm font-semibold" style={{ color: "var(--color-text-main)" }}>
-                Fecha
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold" style={{ color: "var(--color-text-main)" }}>
-                Cliente
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold" style={{ color: "var(--color-text-main)" }}>
-                Concepto
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold" style={{ color: "var(--color-text-main)" }}>
-                Monto
-              </th>
-              <th className="text-left px-6 py-4 text-sm font-semibold" style={{ color: "var(--color-text-main)" }}>
-                Estado
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { date: "23/11/2025", client: "Juan Doe", concept: "Mensualidad Noviembre", amount: "$2,500", status: "Pagado" },
-              { date: "22/11/2025", client: "María García", concept: "Clase Individual", amount: "$1,200", status: "Pagado" },
-              { date: "21/11/2025", client: "Carlos López", concept: "Mensualidad Noviembre", amount: "$2,500", status: "Pendiente" },
-              { date: "20/11/2025", client: "Ana Martínez", concept: "Pack 10 Clases", amount: "$8,000", status: "Pagado" },
-            ].map((pago, idx) => (
-              <tr key={idx} className="border-t" style={{ borderColor: "var(--color-border-subtle)" }}>
-                <td className="px-6 py-4" style={{ color: "var(--color-text-main)" }}>
-                  {pago.date}
-                </td>
-                <td className="px-6 py-4" style={{ color: "var(--color-text-main)" }}>
-                  {pago.client}
-                </td>
-                <td className="px-6 py-4" style={{ color: "var(--color-text-main)" }}>
-                  {pago.concept}
-                </td>
-                <td className="px-6 py-4 font-bold" style={{ color: "var(--color-text-main)" }}>
-                  {pago.amount}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: pago.status === "Pagado" ? "var(--color-success)" : "var(--color-warning)",
-                      color: "white",
-                    }}
-                  >
-                    {pago.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <PagosFilters
+        initialDesde={desde}
+        initialHasta={hasta}
+        initialAlumno={alumnoId}
+        initialCategoria={categoriaId}
+        estudiantes={estudiantes.data || []}
+        categorias={categorias.data || []}
+      />
+
+      <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]">
+        <Suspense fallback={<div className="p-6">Cargando...</div>}>
+          <PagosTable 
+            pagos={pagos || []}
+            currentPage={page}
+            totalPages={totalPages}
+          />
+        </Suspense>
       </div>
     </div>
-  );
+  )
 }
-

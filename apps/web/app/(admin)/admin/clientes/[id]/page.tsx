@@ -1,170 +1,230 @@
-export default function ClienteDetailPage({ params }: { params: { id: string } }) {
+/**
+ * Página: Detalle de Cliente
+ * 
+ * Muestra toda la información del cliente
+ */
+
+import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
+import { createClient, getUser } from '@repo/supabase/server'
+import { canAccessAdmin, getClubId } from '@/lib/auth'
+import { ArrowLeft, Edit, Phone, Mail, MapPin, FileText, Calendar, CreditCard } from 'lucide-react'
+import { ClientStatusBadge } from '@repo/ui'
+
+interface PageProps {
+  params: {
+    id: string
+  }
+}
+
+export default async function ClienteDetallePage({ params }: PageProps) {
+  // Verificar autenticación y permisos
+  const user = await getUser()
+  
+  if (!user || !canAccessAdmin(user)) {
+    redirect('/auth/login')
+  }
+
+  const clubId = getClubId(user)
+  
+  if (!clubId) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Error: No se pudo obtener el club del usuario</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Obtener datos del cliente
+  const supabase = await createClient()
+  
+  const { data: cliente, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('id', params.id)
+    .eq('club_id', clubId)
+    .single()
+
+  if (error || !cliente) {
+    notFound()
+  }
+
   return (
-    <div>
-      <div className="mb-6">
-        <a href="/admin/clientes" className="text-sm mb-2 inline-block" style={{ color: "var(--color-primary)" }}>
-          ← Volver a clientes
-        </a>
-        <h1 className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-          Juan Doe
-        </h1>
-        <p style={{ color: "var(--color-text-muted)" }}>ID: {params.id}</p>
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/admin/clientes">
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-[var(--color-text-main)]">
+              {cliente.nombre} {cliente.apellido}
+            </h1>
+            {cliente.apodo && (
+              <p className="text-[var(--color-text-muted)] mt-1">
+                "{cliente.apodo}"
+              </p>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <ClientStatusBadge status={cliente.estado} />
+          <Link href={`/admin/clientes/${cliente.id}/editar`}>
+            <button className="flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] rounded-lg hover:bg-gray-50 transition-colors">
+              <Edit className="w-4 h-4" />
+              Editar
+            </button>
+          </Link>
+        </div>
       </div>
 
+      {/* Grid de información */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Info */}
+        {/* Información principal */}
         <div className="lg:col-span-2 space-y-6">
-          <div
-            className="rounded-xl border p-6"
-            style={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-subtle)",
-            }}
-          >
-            <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--color-text-main)" }}>
-              Información Personal
+          {/* Datos personales */}
+          <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--color-text-main)] mb-4">
+              Datos Personales
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-                  Nombre completo
-                </p>
-                <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                  Juan Doe
-                </p>
-              </div>
-              <div>
-                <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-                  Email
-                </p>
-                <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                  juan.doe@email.com
-                </p>
-              </div>
-              <div>
-                <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-                  Teléfono
-                </p>
-                <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                  +54 11 1234-5678
-                </p>
-              </div>
-              <div>
-                <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-                  Fecha de nacimiento
-                </p>
-                <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                  15/03/1990
-                </p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoItem label="Nombre completo" value={`${cliente.nombre} ${cliente.apellido}`} />
+              <InfoItem label="Número de cliente" value={cliente.numero_cliente} />
+              <InfoItem label="Fecha de nacimiento" value={cliente.fecha_nacimiento ? new Date(cliente.fecha_nacimiento).toLocaleDateString('es-AR') : null} />
+              <InfoItem label="Género" value={cliente.genero} />
+              <InfoItem label="Documento" value={cliente.numero_documento ? `${cliente.tipo_documento || 'DNI'}: ${cliente.numero_documento}` : null} />
+              <InfoItem label="Ocupación" value={cliente.ocupacion} />
+              <InfoItem label="Obra social" value={cliente.obra_social} />
             </div>
           </div>
 
-          <div
-            className="rounded-xl border p-6"
-            style={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-subtle)",
-            }}
-          >
-            <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--color-text-main)" }}>
-              Historial de Turnos
+          {/* Contacto */}
+          <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--color-text-main)] mb-4">
+              Información de Contacto
             </h2>
             <div className="space-y-3">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="flex items-center justify-between py-3 border-b" style={{ borderColor: "var(--color-border-subtle)" }}>
+              {cliente.telefono && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-[var(--color-text-muted)]" />
                   <div>
-                    <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                      Clase de Tenis - Cancha 1
-                    </p>
-                    <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                      25/11/2025 - 10:00 AM
+                    <p className="text-sm text-[var(--color-text-muted)]">Teléfono</p>
+                    <a href={`tel:${cliente.telefono}`} className="text-sm font-medium text-primary hover:underline">
+                      {cliente.telefono}
+                    </a>
+                  </div>
+                </div>
+              )}
+              
+              {cliente.email && (
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-[var(--color-text-muted)]" />
+                  <div>
+                    <p className="text-sm text-[var(--color-text-muted)]">Email</p>
+                    <a href={`mailto:${cliente.email}`} className="text-sm font-medium text-primary hover:underline">
+                      {cliente.email}
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {cliente.direccion && (
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-[var(--color-text-muted)]" />
+                  <div>
+                    <p className="text-sm text-[var(--color-text-muted)]">Dirección</p>
+                    <p className="text-sm font-medium text-[var(--color-text-main)]">
+                      {cliente.direccion}
+                      {cliente.codigo_postal && ` (${cliente.codigo_postal})`}
+                      {cliente.ciudad && `, ${cliente.ciudad}`}
+                      {cliente.provincia && `, ${cliente.provincia}`}
                     </p>
                   </div>
-                  <span
-                    className="px-3 py-1 rounded-full text-xs font-medium"
-                    style={{ backgroundColor: "var(--color-success)", color: "white" }}
-                  >
-                    Completado
-                  </span>
                 </div>
-              ))}
+              )}
             </div>
+
+            {(cliente.contacto_emergencia || cliente.telefono_emergencia) && (
+              <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
+                <h3 className="text-sm font-semibold text-[var(--color-text-main)] mb-3">
+                  Contacto de Emergencia
+                </h3>
+                <div className="space-y-2">
+                  {cliente.contacto_emergencia && (
+                    <p className="text-sm text-[var(--color-text-main)]">
+                      <span className="text-[var(--color-text-muted)]">Nombre:</span> {cliente.contacto_emergencia}
+                    </p>
+                  )}
+                  {cliente.telefono_emergencia && (
+                    <p className="text-sm text-[var(--color-text-main)]">
+                      <span className="text-[var(--color-text-muted)]">Teléfono:</span> {cliente.telefono_emergencia}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Observaciones */}
+          {cliente.observaciones && (
+            <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-6">
+              <h2 className="text-lg font-semibold text-[var(--color-text-main)] mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Observaciones
+              </h2>
+              <p className="text-sm text-[var(--color-text-main)] whitespace-pre-wrap">
+                {cliente.observaciones}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <div
-            className="rounded-xl border p-6"
-            style={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-subtle)",
-            }}
-          >
-            <h3 className="font-semibold mb-4" style={{ color: "var(--color-text-main)" }}>
-              Estado de Cuenta
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                  Saldo actual
-                </p>
-                <p className="text-2xl font-bold" style={{ color: "var(--color-success)" }}>
-                  Al día
-                </p>
-              </div>
-              <div>
-                <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                  Último pago
-                </p>
-                <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                  $2,500 - 20/11/2025
-                </p>
-              </div>
+          {/* Actividad reciente */}
+          <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--color-text-main)] mb-4 flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Turnos
+            </h2>
+            <div className="text-center py-8">
+              <p className="text-sm text-[var(--color-text-muted)]">
+                Próximamente: historial de turnos
+              </p>
             </div>
           </div>
 
-          <div
-            className="rounded-xl border p-6"
-            style={{
-              backgroundColor: "var(--color-surface)",
-              borderColor: "var(--color-border-subtle)",
-            }}
-          >
-            <h3 className="font-semibold mb-4" style={{ color: "var(--color-text-main)" }}>
-              Acciones Rápidas
-            </h3>
-            <div className="space-y-2">
-              <button
-                className="w-full py-2 rounded-lg font-medium text-white"
-                style={{ backgroundColor: "var(--color-primary)" }}
-              >
-                Nuevo Turno
-              </button>
-              <button
-                className="w-full py-2 rounded-lg font-medium border"
-                style={{
-                  borderColor: "var(--color-border)",
-                  color: "var(--color-text-main)",
-                }}
-              >
-                Registrar Pago
-              </button>
-              <button
-                className="w-full py-2 rounded-lg font-medium border"
-                style={{
-                  borderColor: "var(--color-border)",
-                  color: "var(--color-text-main)",
-                }}
-              >
-                Editar Datos
-              </button>
+          {/* Pagos */}
+          <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-6">
+            <h2 className="text-lg font-semibold text-[var(--color-text-main)] mb-4 flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Pagos
+            </h2>
+            <div className="text-center py-8">
+              <p className="text-sm text-[var(--color-text-muted)]">
+                Próximamente: historial de pagos
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
+function InfoItem({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div>
+      <p className="text-sm text-[var(--color-text-muted)]">{label}</p>
+      <p className="text-sm font-medium text-[var(--color-text-main)]">
+        {value || '-'}
+      </p>
+    </div>
+  )
+}

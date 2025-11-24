@@ -1,118 +1,232 @@
-export default function AdminDashboardPage() {
+"use client";
+
+import { useState } from 'react';
+import { 
+  Users, 
+  Calendar, 
+  CreditCard, 
+  TrendingUp,
+  Clock,
+  ArrowRight,
+  Plus,
+  Search,
+  UserPlus,
+  List,
+  Banknote,
+  CheckCircle,
+  Building2,
+  Edit,
+  RefreshCw,
+  Cake
+} from 'lucide-react';
+import { 
+  Button, 
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardContent,
+  StatCard,
+  Badge,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  Input
+} from '@repo/ui';
+import Link from 'next/link';
+import { DashboardTabs } from '@/components/admin/DashboardTabs';
+import { Zap } from 'lucide-react';
+
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('inicio');
+  const [openTabs, setOpenTabs] = useState(['inicio', 'agenda']);
+
+  const tabs = [
+    { id: 'inicio', label: 'Panel de inicio', icon: Zap },
+    { id: 'agenda', label: 'Agenda diaria', icon: Calendar },
+  ].filter(tab => openTabs.includes(tab.id));
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
+
+  const handleTabClose = (tabId: string) => {
+    if (tabId === 'inicio') return; // No permitir cerrar el tab principal
+    setOpenTabs(openTabs.filter(id => id !== tabId));
+    if (activeTab === tabId) {
+      setActiveTab('inicio');
+    }
+  };
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6" style={{ color: "var(--color-text-main)" }}>
-        Panel de Control
-      </h1>
+    <div className="space-y-6">
+      {/* Tabs */}
+      <DashboardTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onTabClose={handleTabClose}
+        closableTabs={['agenda']}
+      />
+      {/* Contenido según tab activo */}
+      {activeTab === 'inicio' && (
+        <div className="space-y-8">
+          {/* Botones de Acción Principales - Estilo Referencia */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link href="/admin/clientes/nuevo" className="contents">
+              <button className="flex flex-col items-center justify-center p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
+                  <UserPlus className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Crear un Cliente</span>
+              </button>
+            </Link>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Total Clientes
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            248
-          </p>
-          <p className="text-xs mt-2" style={{ color: "var(--color-success)" }}>
-            +12% vs mes anterior
-          </p>
-        </div>
+            <Link href="/admin/clientes" className="contents">
+              <button className="flex flex-col items-center justify-center p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
+                  <List className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Listado de Clientes</span>
+              </button>
+            </Link>
 
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Turnos Hoy
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            34
-          </p>
-          <p className="text-xs mt-2" style={{ color: "var(--color-info)" }}>
-            8 pendientes
-          </p>
-        </div>
+            <Link href="/admin/pagos/nuevo" className="contents">
+              <button className="flex flex-col items-center justify-center p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
+                  <Banknote className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Registrar un pago</span>
+              </button>
+            </Link>
 
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Ingresos Mes
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            $45,290
-          </p>
-          <p className="text-xs mt-2" style={{ color: "var(--color-success)" }}>
-            +8% vs mes anterior
-          </p>
-        </div>
+            <Link href="/admin/turnos" className="contents">
+              <button className="flex flex-col items-center justify-center p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
+                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
+                  <CheckCircle className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Agenda diaria</span>
+              </button>
+            </Link>
+          </div>
 
-        <div
-          className="p-6 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-2" style={{ color: "var(--color-text-muted)" }}>
-            Pagos Pendientes
-          </p>
-          <p className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            12
-          </p>
-          <p className="text-xs mt-2" style={{ color: "var(--color-warning)" }}>
-            $8,500 total
-          </p>
-        </div>
-      </div>
+          {/* Sedes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Link href="/admin/turnos?sedes=caballito" className="contents">
+              <button className="flex items-center gap-4 p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
+                <div className="w-12 h-12 rounded-lg bg-[var(--color-primary-soft)] flex items-center justify-center group-hover:bg-[var(--color-primary)] transition-colors">
+                  <Building2 className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-base font-semibold text-[var(--color-text-main)]">Sede Caballito</span>
+              </button>
+            </Link>
 
-      {/* Recent Activity */}
-      <div
-        className="rounded-xl border p-6"
-        style={{
-          backgroundColor: "var(--color-surface)",
-          borderColor: "var(--color-border-subtle)",
-        }}
-      >
-        <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--color-text-main)" }}>
-          Actividad Reciente
-        </h2>
-        <div className="space-y-4">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <div key={item} className="flex items-center gap-4 py-3 border-b" style={{ borderColor: "var(--color-border-subtle)" }}>
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "var(--color-primary-soft)" }}
-              >
-                <span style={{ color: "var(--color-primary)" }}>JD</span>
+            <Link href="/admin/turnos?sedes=nunez" className="contents">
+              <button className="flex items-center gap-4 p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
+                <div className="w-12 h-12 rounded-lg bg-[var(--color-primary-soft)] flex items-center justify-center group-hover:bg-[var(--color-primary)] transition-colors">
+                  <Building2 className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
+                </div>
+                <span className="text-base font-semibold text-[var(--color-text-main)]">Sede Nuñez</span>
+              </button>
+            </Link>
+          </div>
+
+          {/* Sección de Notas */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">
+                    Notas:
+                  </label>
+                  <textarea
+                    className="w-full min-h-[100px] p-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface)] text-[var(--color-text-main)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                    placeholder="Escribe tus notas aquí..."
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button className="p-2 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors">
+                    <Edit className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors">
+                    <RefreshCw className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-medium" style={{ color: "var(--color-text-main)" }}>
-                  Juan Doe reservó un turno
-                </p>
-                <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                  Hace 2 horas
-                </p>
+              <div className="mt-4">
+                <Button variant="primary" className="w-full md:w-auto">
+                  <Cake className="w-4 h-4 mr-2" />
+                  Cumpleaños
+                </Button>
               </div>
-            </div>
-          ))}
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      )}
+
+      {activeTab === 'agenda' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between w-full">
+                <CardTitle>Agenda del Día</CardTitle>
+                <Link href="/admin/turnos">
+                  <Button variant="ghost" size="sm" className="text-xs gap-1">
+                    Ver todo <ArrowRight size={14} />
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Horario</TableHead>
+                    <TableHead>Actividad</TableHead>
+                    <TableHead>Cancha</TableHead>
+                    <TableHead>Profesor</TableHead>
+                    <TableHead>Estado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[
+                    { time: "18:00", activity: "Tenis - Adultos", court: "Cancha 1", prof: "Juan Pérez", status: "confirmed" },
+                    { time: "19:00", activity: "Fútbol 5", court: "Cancha Principal", prof: "-", status: "pending" },
+                    { time: "19:30", activity: "Tenis - Niños", court: "Cancha 2", prof: "Ana Silva", status: "confirmed" },
+                    { time: "20:00", activity: "Padel", court: "Cancha Cristal", prof: "-", status: "cancelled" },
+                    { time: "21:00", activity: "Fútbol 7", court: "Cancha Principal", prof: "-", status: "confirmed" },
+                  ].map((turno, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-2 font-medium">
+                          <Clock size={14} className="text-[var(--color-text-muted)]" />
+                          {turno.time}
+                        </div>
+                      </TableCell>
+                      <TableCell>{turno.activity}</TableCell>
+                      <TableCell>{turno.court}</TableCell>
+                      <TableCell>{turno.prof}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          turno.status === 'confirmed' ? 'success' : 
+                          turno.status === 'pending' ? 'warning' : 
+                          'error'
+                        }>
+                          {turno.status === 'confirmed' ? 'Confirmado' : 
+                           turno.status === 'pending' ? 'Pendiente' : 
+                           'Cancelado'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
-
