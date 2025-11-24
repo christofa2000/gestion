@@ -15,7 +15,7 @@ const sizeClasses = {
   lg: "h-16 w-16",
 };
 
-export function ClubLogo({ src, alt = "Logo del club", size = "md", className = "" }: ClubLogoProps) {
+export function ClubLogo({ src, alt = "Logo del club", size = "md", className = "" }: ClubLogoProps & { alt?: string }) {
   if (!src) {
     return (
       <div
@@ -35,4 +35,7 @@ export function ClubLogo({ src, alt = "Logo del club", size = "md", className = 
     />
   );
 }
+
+
+
 

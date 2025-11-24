@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { clsx } from "clsx";
 
 interface NavItem {
   href: string;
@@ -12,37 +13,41 @@ interface NavItem {
 
 interface StudentBottomNavProps {
   items: NavItem[];
+  className?: string;
 }
 
-export function StudentBottomNav({ items }: StudentBottomNavProps) {
+export function StudentBottomNav({ items, className }: StudentBottomNavProps) {
   const pathname = usePathname();
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 h-16 border-t flex items-center justify-around z-10 md:hidden"
-      style={{
-        backgroundColor: "var(--color-surface)",
-        borderColor: "var(--color-border-subtle)",
-      }}
+      className={clsx(
+        "fixed bottom-0 left-0 right-0 h-16 border-t border-border-subtle bg-surface flex items-center justify-around z-40 md:hidden safe-area-pb",
+        className
+      )}
     >
       {items.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        // Active if exact match or starts with href (except for root /student which could match everything)
+        const isActive = item.href === "/student" 
+          ? pathname === item.href 
+          : pathname.startsWith(item.href);
         
         return (
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center justify-center flex-1 h-full transition-colors"
+            className={clsx(
+              "flex flex-col items-center justify-center flex-1 h-full transition-colors active:scale-95",
+              isActive ? "text-primary" : "text-text-muted hover:text-text-main"
+            )}
           >
-            <span style={{ color: isActive ? "var(--color-primary)" : "var(--color-text-muted)" }}>
-              {item.icon}
+            <span className={clsx("transition-transform", isActive && "scale-110")}>
+              {React.isValidElement(item.icon) ? React.cloneElement(item.icon as React.ReactElement, { size: 24 }) : item.icon}
             </span>
             <span
-              className="text-xs mt-1"
-              style={{
-                color: isActive ? "var(--color-primary)" : "var(--color-text-muted)",
-                fontWeight: isActive ? 500 : 400,
-              }}
+              className={clsx(
+                "text-[10px] mt-1 font-medium leading-none",
+              )}
             >
               {item.label}
             </span>
@@ -52,4 +57,3 @@ export function StudentBottomNav({ items }: StudentBottomNavProps) {
     </nav>
   );
 }
-
