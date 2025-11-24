@@ -1,8 +1,8 @@
 "use client";
 
+import type { ThemeName } from "@repo/config";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ThemeName } from "@repo/config";
 
 interface ThemeState {
   theme: ThemeName;
@@ -25,4 +25,7 @@ export const useThemeStore = create<ThemeState>()(
     }
   )
 );
+
+
+
 
