@@ -217,3 +217,6 @@ Si ves la landing page en http://localhost:3000, **¡el proyecto está funcionan
 
 **Desarrollado con ❤️ para la gestión deportiva moderna**
 
+
+
+

@@ -170,3 +170,6 @@ Si tienes problemas, consulta:
 - [Documentación de Turborepo](https://turbo.build/repo/docs)
 - Archivo `.cursorrules` en la raíz del proyecto
 
+
+
+

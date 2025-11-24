@@ -589,3 +589,6 @@ O simplemente:
 *Desarrollado con ❤️ para la gestión deportiva moderna*  
 *Versión: 1.0.0 | Estado: ✅ LISTO PARA USAR*
 
+
+
+

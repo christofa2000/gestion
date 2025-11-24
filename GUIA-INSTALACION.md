@@ -455,3 +455,6 @@ http://localhost:3000
 
 *Última actualización: Noviembre 2025*
 
+
+
+

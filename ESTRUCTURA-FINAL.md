@@ -387,3 +387,6 @@ pnpm build                # Build solo web
 
 **Desarrollado con ❤️ para una estructura limpia y profesional**
 
+
+
+

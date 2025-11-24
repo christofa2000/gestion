@@ -447,3 +447,6 @@ La estructura frontend está **100% completa** y lista para conectar con:
 *Next.js: 15.x*
 *React: 19.x*
 
+
+
+

@@ -1,0 +1,281 @@
+# .cursorrules — Plataforma multi-club (gestión de turnos y alumnos)
+
+## Objetivo general
+
+Construir una **plataforma multi-tenant** para clubes/escuelas (ej: JuegoTenis y otros) con:
+
+- **Landing comercial** (marketing y ventas del sistema).
+- **Panel Admin (web app)** para cada club/escuela:
+  - Gestión de clientes/alumnos, turnos, pagos, egresos, configuraciones y estadísticas.
+- **Portal Alumnos (web app)**:
+  - Reserva de turnos, consulta de actividades, horarios, pagos, sedes.
+- Base de datos y auth en **Supabase (free)**, pensada desde el inicio para múltiples clubes.
+
+En futuras fases se agregará **app móvil con React Native + Expo** reutilizando la misma API/DB.
+
+---
+
+## Arquitectura del repositorio (monorepo)
+
+Usar **pnpm** + **Turborepo** (o equivalente) para monorepo.
+
+Estructura base propuesta:
+
+- `apps/`
+  - `web` → Next.js App Router
+    - Incluye: landing comercial + panel admin + portal alumnos (layouts distintos según rol).
+- `packages/`
+  - `ui` → componentes compartidos (botones, inputs, layouts, tablas, modales).
+  - `config` → constantes, tipos compartidos, configuración de theming, roles, etc.
+  - `supabase` → cliente tipado, hooks, helpers y tipos generados.
+  - `eslint-config`, `tsconfig` → config compartida.
+
+Reglas para Cursor:
+
+- Cuando se creen nuevas apps o packages, respetar esta estructura y reutilizar lo existente.
+
+---
+
+## Stack técnico (web)
+
+- **Next.js** (App Router) + **React** + **TypeScript estricto**.
+- **Supabase** (PostgreSQL + Auth + RLS).
+- **Tailwind CSS** + diseño por **tokens/variables CSS**.
+- Librería de componentes: preferencia **shadcn/ui** o componentes propios en `packages/ui`.
+- Gráficos: **Recharts** o similar, sólo en capa de estadísticas.
+- Testing:
+  - **Jest + React Testing Library** para unit/integration.
+  - **Playwright** para E2E (más adelante).
+
+---
+
+## Multi-tenant y seguridad de datos
+
+### Principios
+
+- Toda entidad de negocio principal debe tener `club_id`.
+- Ningún usuario puede ver datos de otro club.
+- Usar **RLS (Row Level Security)** de Supabase para garantizar aislamiento de datos.
+
+### Reglas para Cursor
+
+- Al definir tablas nuevas, incluir siempre:
+  - `id` (uuid).
+  - `club_id` (uuid, FK a `clubs.id`) excepto en tablas globales.
+  - Campos base: `created_at`, `updated_at`, opcional `deleted_at` (soft delete).
+- Al escribir consultas, _nunca_ omitir `club_id` en `WHERE` o `join` cuando corresponda.
+- Implementar policies de RLS por rol:
+  - Admin/Profesor: acceso sólo a filas con `club_id` propio.
+  - Alumno: acceso sólo a sus datos (`student_id`) dentro de su `club_id`.
+
+---
+
+## Modelo de datos (alto nivel)
+
+Tablas principales (en Supabase):
+
+- `clubs`
+- `users` (metadatos de usuario; Supabase Auth como base)
+- `students`
+- `branches` (sedes)
+- `activities`
+- `professionals`
+- `time_slots` (plantillas de turnos/repeticiones)
+- `bookings` (reservas)
+- `payments`
+- `expenses`
+- `payment_methods`
+- `payment_categories`
+- `expense_categories`
+- `notification_settings`
+- Tablas auxiliares para configuraciones: `first_contact_sources`, etc.
+
+Reglas para Cursor:
+
+- Mantener consistencia en nombres: `snake_case` en DB, `camelCase` en TypeScript.
+- Usar tipos generados de Supabase donde sea posible (no duplicar tipos a mano si se pueden derivar).
+
+---
+
+## Theming: paletas de colores por club
+
+Cada club podrá elegir una de **3 paletas base** para Admin y Alumnos, y subir su logo.
+
+### Reglas
+
+- Implementar theming con **CSS variables** + Tailwind.
+- No hardcodear colores en componentes.  
+  Usar tokens tipo `var(--color-primary)`, `var(--color-bg)`, etc.
+- Mantener el mismo sistema de tokens para Admin y Alumnos; cambia sólo la paleta.
+
+### Paletas iniciales (ejemplo)
+
+Definir en `globals.css` o archivo de tema:
+
+- `theme-sky` (azules modernos, look SaaS).
+- `theme-sport` (naranja + gris oscuro, look deportivo).
+- `theme-neutral` (grises/azules suaves, look corporativo).
+
+Ejemplo de tokens:
+
+```css
+:root {
+  --color-bg: #0b1020;
+  --color-surface: #151a2b;
+  --color-primary: #2563eb;
+  --color-primary-soft: #1d4ed8;
+  --color-accent: #22c55e;
+  --color-text-main: #f9fafb;
+  --color-text-muted: #9ca3af;
+  --color-border-subtle: #1f2937;
+}
+
+/* Variantes por tema (simplificado) */
+.theme-sport {
+  --color-primary: #f97316; /* naranja */
+  --color-primary-soft: #ea580c;
+}
+
+.theme-neutral {
+  --color-primary: #14b8a6; /* teal */
+  --color-primary-soft: #0f766e;
+}
+Reglas para Cursor:
+
+Crear un contexto de theming sencillo:
+
+Clase en <html> o <body> (theme-sky / theme-sport / theme-neutral).
+
+Campo en la tabla clubs para guardar theme y logo_url.
+
+Componentes de UI deben usar tokens, no colores fijos.
+
+Roles y layouts
+Roles de usuario:
+
+SUPER_ADMIN (interno, opcional para v1).
+
+CLUB_ADMIN
+
+PROFESSIONAL
+
+STUDENT
+
+Reglas para Cursor:
+
+Implementar layouts separados:
+
+AdminLayout → navegación lateral/top para módulos de gestión.
+
+StudentLayout → navegación más simple, centrada en agenda y pagos.
+
+Determinar layout según rol del usuario logueado.
+
+No mezclar lógica de roles dentro de cada componente; usar helpers centralizados (hasRole, getCurrentClub).
+
+Estándares de código
+TypeScript
+"strict": true en tsconfig.
+
+Prohibido any explícito.
+
+No usar as unknown as Tipo salvo casos justificados.
+
+Tipar siempre props y respuestas de API.
+
+React / Next.js
+Usar Server Components por defecto; Client Components sólo cuando se necesiten hooks o interactividad.
+
+Manejar estados globales mínimos; preferir hooks locales + data fetching.
+
+Data fetching:
+
+Para vistas complejas de Admin: server actions o route handlers según corresponda.
+
+Para filtros/paginación: preferir queries server-side con parámetros en la URL.
+
+Estilo y estructura
+Organización por features/módulos:
+
+app/(admin)/clientes, app/(admin)/turnos, app/(student)/agenda, etc.
+
+Evitar "carpetas genéricas" gigantes (components/ sin contexto).
+En su lugar: clientes/components/ClientsTable.tsx, etc.
+
+No usar any ni // @ts-ignore para "salir del paso".
+
+Testing
+Crear configuración Jest en monorepo compartida.
+
+Prioridad:
+
+Pruebas de componentes críticos de Admin (tablas y formularios).
+
+Lógica de helpers (ej: generación de slots, reglas de reservas).
+
+E2E con Playwright más adelante:
+
+Flujos clave: login, crear cliente, reservar turno, registrar pago.
+
+Reglas para Cursor:
+
+Cuando se agregue una lógica compleja (por ejemplo generación de agenda, reglas de cancelación, estadísticas), crear al menos 1–2 tests unitarios que cubran casos básicos y algún edge case.
+
+Buenas prácticas de UX (Admin y Alumnos)
+Formularios con validación clara (usar Zod + react-hook-form).
+
+Mensajes de error amigables, no códigos técnicos.
+
+En Admin:
+
+Priorizar tablas con filtros, búsqueda y paginación.
+
+Confirmaciones antes de acciones destructivas.
+
+En Alumnos:
+
+Flujo corto: ver agenda → seleccionar turno → confirmar.
+
+Mostrar siempre estado de cuenta sencillo: "Al día" / "Debe X".
+
+Flujo de trabajo con Cursor
+Cuando el usuario pida nuevas features:
+
+Identificar módulo
+Ej: "Clientes", "Turnos", "Pagos", "Configuraciones", "Estadísticas", "Landing", "Alumnos".
+
+Actualizar modelo de datos si hace falta
+
+Proponer cambios a tablas y RLS antes de tocar el frontend.
+
+Implementar en orden
+
+Backend/queries,
+
+UI (componentes en packages/ui si son reutilizables),
+
+Página Next.js,
+
+Tests.
+
+Respetar siempre:
+
+Monorepo y estructura de carpetas.
+
+Tokens de color y sistema de theming.
+
+Multi-tenant con club_id.
+
+Cosas que NO debe hacer Cursor
+No hardcodear IDs de club, usuario o entorno en código.
+
+No bypass de RLS haciendo consultas sin club_id.
+
+No crear estilos con styled-jsx o CSS suelto; usar Tailwind + tokens.
+
+No mezclar lógica de negocio de Admin y Alumnos en los mismos componentes.
+```
+
+
+
+

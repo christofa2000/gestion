@@ -32,6 +32,7 @@ pnpm dev
 ```
 
 ### 📍 El proyecto estará en:
+
 👉 **http://localhost:3000**
 
 ---
@@ -39,18 +40,21 @@ pnpm dev
 ## 📋 ¿Qué Incluye Este Proyecto?
 
 ### ✅ Aplicación Web (Next.js 15)
+
 - **Panel Admin**: Gestión completa del club
 - **Portal Alumnos**: Reservas y pagos
 - **Landing Marketing**: Sitio público
 - **Sistema de Auth**: Login y registro
 
 ### ✅ Base de Datos (Supabase)
+
 - **16 tablas** completamente relacionadas
 - **RLS (Row Level Security)** completo
 - **Multi-tenant** con aislamiento por club
 - **Seeds** con datos de ejemplo
 
 ### ✅ Monorepo
+
 - **Turborepo** para builds rápidos
 - **pnpm workspaces** para gestión de dependencias
 - **3 packages compartidos**: ui, config, supabase
@@ -60,12 +64,14 @@ pnpm dev
 ## 📚 Documentación
 
 ### 🎯 Para Empezar
+
 - **[INICIO-RAPIDO.md](./INICIO-RAPIDO.md)** → Guía de 5 minutos
 - **[GUIA-INSTALACION.md](./GUIA-INSTALACION.md)** → Guía completa paso a paso
 - **[PROYECTO-LISTO.md](./PROYECTO-LISTO.md)** → Confirmación de todo lo implementado
 - **[ESTRUCTURA-FINAL.md](./ESTRUCTURA-FINAL.md)** → Estructura completa del proyecto ✨
 
 ### 🗄️ Base de Datos
+
 Toda la documentación de Supabase está ahora en **`apps/web/supabase/`**:
 
 - **[apps/web/supabase/supabase-schema.sql](./apps/web/supabase/supabase-schema.sql)** → Script SQL ejecutable
@@ -75,6 +81,7 @@ Toda la documentación de Supabase está ahora en **`apps/web/supabase/`**:
 - **[apps/web/supabase/README.md](./apps/web/supabase/README.md)** → Índice de documentación
 
 ### 🎨 Frontend
+
 - **[apps/web/README.md](./apps/web/README.md)** → Documentación de la web app
 - **[RESUMEN_ESTRUCTURA_FRONTEND.md](./RESUMEN_ESTRUCTURA_FRONTEND.md)** → Estructura del frontend
 
@@ -114,6 +121,7 @@ Gestion/
 ## 🎯 Stack Tecnológico
 
 ### Frontend
+
 - **Next.js 15** con App Router
 - **React 19** con React Compiler ⚡
 - **TypeScript** estricto
@@ -121,11 +129,13 @@ Gestion/
 - **Zustand** para estado global
 
 ### Backend
+
 - **Supabase** (PostgreSQL + Auth + Storage)
 - **Row Level Security** (RLS) completo
 - **Multi-tenant** con aislamiento de datos
 
 ### DevOps
+
 - **pnpm** + **Turborepo** (monorepo)
 - **ESLint** + **TypeScript**
 - **Hot Module Replacement** activo
@@ -135,18 +145,22 @@ Gestion/
 ## ✨ Características Principales
 
 ### 🎨 Sistema de Theming
+
 3 paletas de colores personalizables:
+
 - **theme-sky**: Azul SaaS moderno
 - **theme-sport**: Naranja deportivo energético
 - **theme-neutral**: Gris corporativo
 
 ### 🔐 4 Roles de Usuario
+
 - **SUPER_ADMIN**: Administrador global
 - **CLUB_ADMIN**: Administrador del club
 - **PROFESSIONAL**: Instructor/Profesor
 - **STUDENT**: Alumno/Cliente
 
 ### 📊 Módulos Completos
+
 - ✅ Gestión de clientes/alumnos
 - ✅ Programación de turnos/clases
 - ✅ Control de pagos e ingresos
@@ -155,6 +169,7 @@ Gestion/
 - ✅ Configuraciones del club
 
 ### 🏢 Multi-Tenant
+
 - Cada club tiene datos completamente aislados
 - Seguridad a nivel de fila (RLS)
 - Logo y theming personalizables
@@ -207,17 +222,20 @@ pnpm clean            # Limpiar builds y node_modules
 ## 🔗 Rutas Principales
 
 ### Públicas (sin login)
+
 - `/` → Home
 - `/precios` → Planes y precios
 - `/contacto` → Formulario de contacto
 - `/demo` → Solicitar demo
 
 ### Autenticación
+
 - `/auth/login` → Iniciar sesión
 - `/auth/register` → Registrarse
 - `/auth/recover` → Recuperar contraseña
 
 ### Panel Admin (requiere login)
+
 - `/admin` → Dashboard
 - `/admin/clientes` → Gestión de alumnos
 - `/admin/turnos` → Gestión de turnos
@@ -226,6 +244,7 @@ pnpm clean            # Limpiar builds y node_modules
 - `/admin/configuraciones` → Configuraciones
 
 ### Portal Alumnos (requiere login)
+
 - `/student` → Dashboard
 - `/student/agenda` → Ver y reservar turnos
 - `/student/turnos` → Mis reservas
@@ -237,12 +256,15 @@ pnpm clean            # Limpiar builds y node_modules
 ## 🎨 Capturas
 
 ### Landing Page
+
 ![Landing](https://via.placeholder.com/800x400?text=Landing+Page)
 
 ### Panel Admin
+
 ![Admin](https://via.placeholder.com/800x400?text=Panel+Admin)
 
 ### Portal Alumnos
+
 ![Student](https://via.placeholder.com/800x400?text=Portal+Alumnos)
 
 ---
@@ -275,18 +297,18 @@ Más soluciones en **[GUIA-INSTALACION.md](./GUIA-INSTALACION.md#troubleshooting
 
 ## 📊 Estado del Proyecto
 
-| Componente | Estado | Descripción |
-|------------|--------|-------------|
-| Next.js 15 | ✅ 100% | App Router completo |
-| React 19 | ✅ 100% | Con React Compiler |
-| Tailwind CSS | ✅ 100% | 3 temas configurados |
-| TypeScript | ✅ 100% | Modo estricto |
-| Rutas | ✅ 100% | 20+ rutas creadas |
-| Layouts | ✅ 100% | 4 layouts |
-| Components | ✅ 100% | 15+ componentes |
-| Supabase Schema | ✅ 100% | 16 tablas con RLS |
-| Documentación | ✅ 100% | Guías completas |
-| Monorepo | ✅ 100% | 3 packages |
+| Componente      | Estado  | Descripción          |
+| --------------- | ------- | -------------------- |
+| Next.js 15      | ✅ 100% | App Router completo  |
+| React 19        | ✅ 100% | Con React Compiler   |
+| Tailwind CSS    | ✅ 100% | 3 temas configurados |
+| TypeScript      | ✅ 100% | Modo estricto        |
+| Rutas           | ✅ 100% | 20+ rutas creadas    |
+| Layouts         | ✅ 100% | 4 layouts            |
+| Components      | ✅ 100% | 15+ componentes      |
+| Supabase Schema | ✅ 100% | 16 tablas con RLS    |
+| Documentación   | ✅ 100% | Guías completas      |
+| Monorepo        | ✅ 100% | 3 packages           |
 
 ---
 
@@ -306,6 +328,7 @@ Más soluciones en **[GUIA-INSTALACION.md](./GUIA-INSTALACION.md#troubleshooting
 ## 📝 TODO List
 
 ### Completado ✅
+
 - [x] Estructura de proyecto
 - [x] Next.js 15 configurado
 - [x] React 19 con Compiler
@@ -319,6 +342,7 @@ Más soluciones en **[GUIA-INSTALACION.md](./GUIA-INSTALACION.md#troubleshooting
 - [x] Monorepo con pnpm + Turborepo
 
 ### Por Hacer ⏳
+
 - [ ] Integrar Supabase Auth real
 - [ ] Implementar formularios con validación
 - [ ] Crear componentes de UI completos
@@ -379,6 +403,6 @@ http://localhost:3000
 
 **Desarrollado con ❤️ para la gestión deportiva moderna**
 
-*Versión: 1.0.0*  
-*Última actualización: Noviembre 2025*  
-*Estado: ✅ PRODUCTION READY*
+_Versión: 1.0.0_  
+_Última actualización: Noviembre 2025_  
+_Estado: ✅ PRODUCTION READY_

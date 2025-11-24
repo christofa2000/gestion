@@ -377,3 +377,6 @@ Todo el sistema Next.js está configurado, funcionando y listo para desarrollo.
 *Fecha: Noviembre 2025*  
 *Status: PRODUCTION READY*
 
+
+
+
