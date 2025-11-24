@@ -5,6 +5,8 @@ const nextConfig = {
   experimental: {
     reactCompiler: true,
   },
+  // Fix para Windows + OneDrive: configurar tracing root para evitar problemas de permisos
+  outputFileTracingRoot: require('path').join(__dirname, '../../'),
 };
 
 module.exports = nextConfig;

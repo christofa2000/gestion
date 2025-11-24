@@ -1,16 +1,18 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+      },
       colors: {
-        // Using CSS variables for theming
         bg: "var(--color-bg)",
         surface: "var(--color-surface)",
         primary: {
@@ -23,8 +25,18 @@ const config: Config = {
           muted: "var(--color-text-muted)",
         },
         border: {
+          DEFAULT: "var(--color-border-subtle)",
           subtle: "var(--color-border-subtle)",
         },
+        error: "var(--color-error)",
+        success: "var(--color-success)",
+        warning: "var(--color-warning)",
+      },
+      borderRadius: {
+        DEFAULT: "var(--radius)",
+        lg: "var(--radius)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
       },
     },
   },
@@ -32,4 +44,3 @@ const config: Config = {
 };
 
 export default config;
-
