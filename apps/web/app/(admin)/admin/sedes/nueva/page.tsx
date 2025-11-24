@@ -1,7 +1,7 @@
 /**
- * Página: Nuevo Cliente
+ * Página: Nueva Sede
  *
- * Formulario para crear un nuevo cliente
+ * Formulario para crear una nueva sede
  */
 
 import { canAccessAdmin, getClubId } from "@/lib/auth";
@@ -9,9 +9,9 @@ import { getUser } from "@repo/supabase/server";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ClientForm } from "../components/ClientForm";
+import { SedeForm } from "../components/SedeForm";
 
-export default async function NuevoClientePage() {
+export default async function NuevaSedePage() {
   // Verificar autenticación y permisos
   const user = await getUser();
 
@@ -35,23 +35,24 @@ export default async function NuevoClientePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/admin/clientes">
+        <Link href="/admin/sedes">
           <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-[var(--color-text-main)]">Nuevo Cliente</h1>
+          <h1 className="text-3xl font-bold text-[var(--color-text-main)]">Nueva Sede</h1>
           <p className="text-[var(--color-text-muted)] mt-1">
-            Completa los datos del nuevo cliente
+            Completa los datos de la nueva sede
           </p>
         </div>
       </div>
 
       {/* Formulario */}
       <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] p-6">
-        <ClientForm clubId={clubId} />
+        <SedeForm />
       </div>
     </div>
   );
 }
+

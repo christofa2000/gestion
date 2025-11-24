@@ -11,9 +11,9 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createSupabaseBrowserClient } from '@repo/supabase/client'
 import { Input, Select, Textarea } from '@repo/ui'
 import { Loader2, Save } from 'lucide-react'
+import { createStudent, updateStudent } from '../actions'
 
 // Schema de validación
 const clientSchema = z.object({
@@ -74,42 +74,32 @@ export function ClientForm({ clubId, initialData, clienteId }: ClientFormProps) 
     setError(null)
 
     try {
-      const supabase = createSupabaseBrowserClient()
-      
-      // Limpiar campos vacíos
-      const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([_, value]) => value !== '' && value !== undefined)
-      )
-
       if (clienteId) {
         // Actualizar cliente existente
-        const { error: updateError } = await supabase
-          .from('students')
-          .update({
-            ...cleanData,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', clienteId)
-          .eq('club_id', clubId)
+        const result = await updateStudent(clienteId, data)
 
-        if (updateError) throw updateError
+        if (result.error) {
+          throw new Error(result.error)
+        }
 
         router.push(`/admin/clientes/${clienteId}`)
         router.refresh()
       } else {
         // Crear nuevo cliente
-        const { data: newClient, error: insertError } = await supabase
-          .from('students')
-          .insert({
-            ...cleanData,
-            club_id: clubId,
-          })
-          .select()
-          .single()
+        const result = await createStudent(data)
 
-        if (insertError) throw insertError
+        if (result.error) {
+          const errorMessage = result.details 
+            ? `${result.error}\nDetalles: ${result.details}`
+            : result.error
+          throw new Error(errorMessage)
+        }
 
-        router.push(`/admin/clientes/${newClient.id}`)
+        if (!result.data) {
+          throw new Error('No se recibieron datos del estudiante creado')
+        }
+
+        router.push(`/admin/clientes/${result.data.id}`)
         router.refresh()
       }
     } catch (err) {

@@ -5,12 +5,24 @@
  */
 
 import { redirect } from 'next/navigation'
-import type { UserRole, SupabaseUser } from '@repo/supabase'
+import type { UserRole } from '@repo/supabase'
+
+/**
+ * Tipo compatible con cualquier usuario que tenga user_metadata
+ * Compatible con User de Supabase Auth y SupabaseUser del proyecto
+ */
+type AuthUser = {
+  user_metadata?: {
+    role?: string
+    club_id?: string
+    [key: string]: unknown
+  }
+} | null
 
 /**
  * Obtener el rol del usuario desde el objeto user
  */
-export function getUserRole(user: SupabaseUser | null): UserRole | null {
+export function getUserRole(user: AuthUser): UserRole | null {
   if (!user) return null
   return user.user_metadata?.role as UserRole || null
 }
@@ -18,7 +30,7 @@ export function getUserRole(user: SupabaseUser | null): UserRole | null {
 /**
  * Verificar si el usuario es admin (CLUB_ADMIN o SUPER_ADMIN)
  */
-export function isAdmin(user: SupabaseUser | null): boolean {
+export function isAdmin(user: AuthUser): boolean {
   const role = getUserRole(user)
   return role === 'CLUB_ADMIN' || role === 'SUPER_ADMIN'
 }
@@ -26,7 +38,7 @@ export function isAdmin(user: SupabaseUser | null): boolean {
 /**
  * Verificar si el usuario es super admin
  */
-export function isSuperAdmin(user: SupabaseUser | null): boolean {
+export function isSuperAdmin(user: AuthUser): boolean {
   const role = getUserRole(user)
   return role === 'SUPER_ADMIN'
 }
@@ -34,7 +46,7 @@ export function isSuperAdmin(user: SupabaseUser | null): boolean {
 /**
  * Verificar si el usuario es estudiante
  */
-export function isStudent(user: SupabaseUser | null): boolean {
+export function isStudent(user: AuthUser): boolean {
   const role = getUserRole(user)
   return role === 'STUDENT'
 }
@@ -42,7 +54,7 @@ export function isStudent(user: SupabaseUser | null): boolean {
 /**
  * Verificar si el usuario es profesional
  */
-export function isProfessional(user: SupabaseUser | null): boolean {
+export function isProfessional(user: AuthUser): boolean {
   const role = getUserRole(user)
   return role === 'PROFESSIONAL'
 }
@@ -50,9 +62,9 @@ export function isProfessional(user: SupabaseUser | null): boolean {
 /**
  * Obtener el club_id del usuario
  */
-export function getClubId(user: SupabaseUser | null): string | null {
+export function getClubId(user: AuthUser): string | null {
   if (!user) return null
-  return user.user_metadata?.club_id || null
+  return user.user_metadata?.club_id as string | null || null
 }
 
 /**
@@ -68,7 +80,7 @@ export function getClubId(user: SupabaseUser | null): string | null {
  * redirectByRole(user)
  * ```
  */
-export function redirectByRole(user: SupabaseUser | null): never {
+export function redirectByRole(user: AuthUser): never {
   if (!user) {
     redirect('/auth/login')
   }
@@ -94,7 +106,7 @@ export function redirectByRole(user: SupabaseUser | null): never {
 /**
  * Verificar si el usuario puede acceder a una ruta admin
  */
-export function canAccessAdmin(user: SupabaseUser | null): boolean {
+export function canAccessAdmin(user: AuthUser): boolean {
   const role = getUserRole(user)
   return role === 'SUPER_ADMIN' || role === 'CLUB_ADMIN' || role === 'PROFESSIONAL'
 }
@@ -102,7 +114,7 @@ export function canAccessAdmin(user: SupabaseUser | null): boolean {
 /**
  * Verificar si el usuario puede acceder a una ruta student
  */
-export function canAccessStudent(user: SupabaseUser | null): boolean {
+export function canAccessStudent(user: AuthUser): boolean {
   return isStudent(user)
 }
 
@@ -110,7 +122,7 @@ export function canAccessStudent(user: SupabaseUser | null): boolean {
  * Verificar si el usuario puede acceder a configuraciones completas
  * (solo SUPER_ADMIN y CLUB_ADMIN)
  */
-export function canAccessConfig(user: SupabaseUser | null): boolean {
+export function canAccessConfig(user: AuthUser): boolean {
   return isAdmin(user)
 }
 
@@ -118,7 +130,7 @@ export function canAccessConfig(user: SupabaseUser | null): boolean {
  * Verificar si el usuario puede ver datos financieros
  * (solo SUPER_ADMIN y CLUB_ADMIN)
  */
-export function canAccessFinancials(user: SupabaseUser | null): boolean {
+export function canAccessFinancials(user: AuthUser): boolean {
   return isAdmin(user)
 }
 
