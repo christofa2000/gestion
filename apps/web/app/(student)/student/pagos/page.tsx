@@ -1,126 +1,160 @@
-export default function PagosStudentPage() {
+/**
+ * Página: Mis Pagos (Alumno)
+ * 
+ * Muestra el historial de pagos del alumno
+ */
+
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createSupabaseBrowserClient } from '@repo/supabase/client'
+import { DollarSign, Loader2, TrendingUp } from 'lucide-react'
+
+export default function StudentPagosPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [pagos, setPagos] = useState<any[]>([])
+  const [totalMes, setTotalMes] = useState(0)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setLoading(true)
+    const supabase = createSupabaseBrowserClient()
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    const studentId = user.user_metadata?.student_id
+
+    if (!studentId) {
+      setLoading(false)
+      return
+    }
+
+    // Obtener pagos
+    const { data } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        payment_categories:categoria_id(nombre),
+        payment_methods:medio_pago_id(nombre)
+      `)
+      .eq('student_id', studentId)
+      .order('fecha_pago', { ascending: false })
+
+    setPagos(data || [])
+
+    // Calcular total del mes actual
+    const now = new Date()
+    const mesActualInicio = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    
+    const pagosMes = data?.filter(p => p.fecha_pago >= mesActualInicio) || []
+    const total = pagosMes.reduce((sum, p) => sum + p.monto, 0)
+    setTotalMes(total)
+
+    setLoading(false)
+  }
+
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-[var(--color-text-main)]">
           Mis Pagos
         </h1>
-        <p style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-[var(--color-text-muted)] mt-1">
           Historial de pagos y estado de cuenta
         </p>
       </div>
 
-      {/* Account Status */}
-      <div
-        className="rounded-xl border p-6 mb-6"
-        style={{
-          backgroundColor: "var(--color-surface)",
-          borderColor: "var(--color-border-subtle)",
-        }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold" style={{ color: "var(--color-text-main)" }}>
-            Estado de Cuenta
-          </h2>
-          <span
-            className="px-4 py-2 rounded-full font-medium"
-            style={{ backgroundColor: "var(--color-success)", color: "white" }}
-          >
-            ✓ Al día
-          </span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Stats */}
+      <div className="bg-[var(--color-surface)] p-6 rounded-lg border border-[var(--color-border)]">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-              Último Pago
-            </p>
-            <p className="text-2xl font-bold" style={{ color: "var(--color-text-main)" }}>
-              $2,500
-            </p>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              20/11/2025
+            <p className="text-sm text-[var(--color-text-muted)] mb-1">Total Pagado este Mes</p>
+            <p className="text-3xl font-bold text-green-600">
+              ${totalMes.toLocaleString()}
             </p>
           </div>
-          <div>
-            <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-              Próximo Vencimiento
-            </p>
-            <p className="text-2xl font-bold" style={{ color: "var(--color-text-main)" }}>
-              $2,500
-            </p>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              01/12/2025
-            </p>
-          </div>
-          <div>
-            <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-              Total Año
-            </p>
-            <p className="text-2xl font-bold" style={{ color: "var(--color-text-main)" }}>
-              $28,000
-            </p>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              12 pagos
-            </p>
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <TrendingUp className="w-6 h-6 text-green-600" />
           </div>
         </div>
       </div>
 
-      {/* Payment History */}
-      <div
-        className="rounded-xl border overflow-hidden"
-        style={{
-          backgroundColor: "var(--color-surface)",
-          borderColor: "var(--color-border-subtle)",
-        }}
-      >
-        <div className="p-6 border-b" style={{ borderColor: "var(--color-border-subtle)" }}>
-          <h2 className="text-xl font-semibold" style={{ color: "var(--color-text-main)" }}>
-            Historial de Pagos
-          </h2>
-        </div>
-        <div className="divide-y" style={{ borderColor: "var(--color-border-subtle)" }}>
-          {[
-            { date: "20/11/2025", concept: "Mensualidad Noviembre", amount: "$2,500", method: "Transferencia", status: "Pagado" },
-            { date: "20/10/2025", concept: "Mensualidad Octubre", amount: "$2,500", method: "Efectivo", status: "Pagado" },
-            { date: "20/09/2025", concept: "Mensualidad Septiembre", amount: "$2,500", method: "Transferencia", status: "Pagado" },
-            { date: "20/08/2025", concept: "Mensualidad Agosto", amount: "$2,500", method: "Tarjeta", status: "Pagado" },
-          ].map((pago, idx) => (
-            <div key={idx} className="p-4 flex items-center justify-between">
-              <div className="flex-1">
-                <p className="font-medium mb-1" style={{ color: "var(--color-text-main)" }}>
-                  {pago.concept}
-                </p>
-                <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                  {pago.date} • {pago.method}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-lg" style={{ color: "var(--color-text-main)" }}>
-                  {pago.amount}
-                </p>
-                <span
-                  className="inline-block px-3 py-1 rounded-full text-xs font-medium mt-1"
-                  style={{ backgroundColor: "var(--color-success)", color: "white" }}
-                >
-                  {pago.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Action Button */}
-      <div className="mt-6 text-center">
-        <button
-          className="px-6 py-3 rounded-lg font-medium text-white"
-          style={{ backgroundColor: "var(--color-primary)" }}
-        >
-          Realizar Pago
-        </button>
+      {/* Lista de pagos */}
+      <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]">
+        {loading ? (
+          <div className="p-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-gray-400" />
+          </div>
+        ) : pagos.length === 0 ? (
+          <div className="p-12 text-center">
+            <DollarSign className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-[var(--color-text-main)] mb-2">
+              No hay pagos registrados
+            </h3>
+            <p className="text-[var(--color-text-muted)]">
+              Cuando realices pagos, aparecerán aquí
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-[var(--color-border)]">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase">
+                    Fecha
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase">
+                    Concepto
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase">
+                    Monto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase">
+                    Medio de Pago
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {pagos.map((pago) => (
+                  <tr key={pago.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
+                      {new Date(pago.fecha_pago).toLocaleDateString('es-AR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[var(--color-text-main)]">
+                        {pago.payment_categories?.nombre || 'Pago'}
+                      </div>
+                      {pago.detalle && (
+                        <div className="text-xs text-[var(--color-text-muted)]">
+                          {pago.detalle}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <span className="text-sm font-bold text-green-600">
+                        ${pago.monto.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-muted)]">
+                      {pago.payment_methods?.nombre || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }
-

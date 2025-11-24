@@ -1,116 +1,113 @@
-export default function StudentHomePage() {
+/**
+ * Portal Alumno - Agenda
+ * 
+ * Página principal para alumnos donde pueden ver y reservar turnos.
+ */
+
+import { Calendar, Clock, MapPin } from 'lucide-react'
+
+export default function StudentAgenda() {
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
-          Bienvenido, Juan 👋
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl lg:text-3xl font-bold text-[var(--color-text-main)]">
+          Mi Agenda
         </h1>
-        <p style={{ color: "var(--color-text-muted)" }}>
-          Aquí puedes gestionar tus clases y pagos
+        <p className="text-[var(--color-text-muted)] mt-1">
+          Reserva y gestiona tus turnos
         </p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div
-          className="p-4 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-            Próxima Clase
-          </p>
-          <p className="text-2xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            Hoy 16:00
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-            Tenis - Cancha 1
-          </p>
-        </div>
-
-        <div
-          className="p-4 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-            Estado de Cuenta
-          </p>
-          <p className="text-2xl font-bold" style={{ color: "var(--color-success)" }}>
-            Al día
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-            Último pago: $2,500
-          </p>
-        </div>
-
-        <div
-          className="p-4 rounded-xl border"
-          style={{
-            backgroundColor: "var(--color-surface)",
-            borderColor: "var(--color-border-subtle)",
-          }}
-        >
-          <p className="text-sm mb-1" style={{ color: "var(--color-text-muted)" }}>
-            Clases este Mes
-          </p>
-          <p className="text-2xl font-bold" style={{ color: "var(--color-text-main)" }}>
-            12
-          </p>
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-            4 más programadas
-          </p>
+      {/* Estado de cuenta */}
+      <div className="bg-gradient-to-r from-primary to-[var(--color-primary-soft)] rounded-lg p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm opacity-90">Estado de Cuenta</p>
+            <p className="text-2xl font-bold mt-1">Al día ✓</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm opacity-90">Próximo Pago</p>
+            <p className="text-lg font-semibold mt-1">15 Dic</p>
+          </div>
         </div>
       </div>
 
-      {/* Upcoming Classes */}
-      <div
-        className="rounded-xl border p-6"
-        style={{
-          backgroundColor: "var(--color-surface)",
-          borderColor: "var(--color-border-subtle)",
-        }}
-      >
-        <h2 className="text-xl font-semibold mb-4" style={{ color: "var(--color-text-main)" }}>
-          Próximas Clases
+      {/* Mis turnos */}
+      <div>
+        <h2 className="text-xl font-semibold text-[var(--color-text-main)] mb-4">
+          Mis Próximos Turnos
         </h2>
+        
         <div className="space-y-3">
-          {[
-            { date: "Hoy 16:00", activity: "Clase de Tenis", location: "Cancha 1", professor: "Juan Pérez" },
-            { date: "Mañana 10:00", activity: "Clase de Tenis", location: "Cancha 2", professor: "Juan Pérez" },
-            { date: "Viernes 16:00", activity: "Clase de Tenis", location: "Cancha 1", professor: "Juan Pérez" },
-          ].map((clase, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-4 rounded-lg border"
-              style={{ borderColor: "var(--color-border-subtle)" }}
-            >
-              <div>
-                <p className="font-medium mb-1" style={{ color: "var(--color-text-main)" }}>
-                  {clase.activity}
-                </p>
-                <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-                  {clase.date} • {clase.location} • Prof. {clase.professor}
-                </p>
-              </div>
-              <button
-                className="px-4 py-2 rounded-lg text-sm font-medium border"
-                style={{
-                  borderColor: "var(--color-border)",
-                  color: "var(--color-text-main)",
-                }}
-              >
-                Ver Detalles
-              </button>
+          {/* Turno ejemplo 1 */}
+          <TurnoCard
+            actividad="Tenis - Clase Grupal"
+            fecha="Lun 25 Nov"
+            hora="18:00 - 19:00"
+            sede="Sede Central"
+            profesor="Juan Pérez"
+          />
+
+          {/* Turno ejemplo 2 */}
+          <TurnoCard
+            actividad="Tenis - Clase Individual"
+            fecha="Mié 27 Nov"
+            hora="19:00 - 20:00"
+            sede="Sede Norte"
+            profesor="María González"
+          />
+        </div>
+      </div>
+
+      {/* Botón de reservar */}
+      <button className="w-full py-4 bg-primary hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
+        <Calendar className="w-5 h-5" />
+        Reservar Nuevo Turno
+      </button>
+    </div>
+  )
+}
+
+interface TurnoCardProps {
+  actividad: string
+  fecha: string
+  hora: string
+  sede: string
+  profesor: string
+}
+
+function TurnoCard({ actividad, fecha, hora, sede, profesor }: TurnoCardProps) {
+  return (
+    <div className="bg-[var(--color-surface)] rounded-lg p-4 border border-[var(--color-border)] hover:border-primary transition-colors">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h3 className="font-semibold text-[var(--color-text-main)]">
+            {actividad}
+          </h3>
+          
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <Calendar className="w-4 h-4" />
+              <span>{fecha}</span>
             </div>
-          ))}
+            
+            <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <Clock className="w-4 h-4" />
+              <span>{hora}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+              <MapPin className="w-4 h-4" />
+              <span>{sede} • {profesor}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+          <Calendar className="w-6 h-6 text-primary" />
         </div>
       </div>
     </div>
-  );
+  )
 }
-
