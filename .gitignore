@@ -51,3 +51,8 @@ REORGANIZACION-COMPLETADA.md
 RESUMEN-REORGANIZACION.md
 GIT-COMMITS.md
 SUBIR-A-GITHUB.md
+
+# Archivos con información sensible (no subir a GitHub)
+CREDENCIALES-SUPABASE.txt
+*CREDENCIALES*.txt
+*SECRET*.txt
