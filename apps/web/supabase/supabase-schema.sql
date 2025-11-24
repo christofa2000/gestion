@@ -9,7 +9,7 @@
 
 -- Habilitar extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "postgis"; -- Para geolocalización (opcional)
+-- CREATE EXTENSION IF NOT EXISTS "postgis"; -- Para geolocalización (opcional)
 
 -- =============================================================================
 -- 1. TABLAS PRINCIPALES
@@ -40,7 +40,7 @@ CREATE INDEX idx_clubs_nombre ON clubs(nombre);
 -- -----------------------------------------------------------------------------
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    auth_user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    auth_user_id UUID UNIQUE NOT NULL, -- Vinculado a auth.users pero sin FK por permisos de Supabase
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
     role VARCHAR(50) NOT NULL CHECK (role IN ('SUPER_ADMIN', 'CLUB_ADMIN', 'PROFESSIONAL', 'STUDENT')),
     nombre VARCHAR(255) NOT NULL,
@@ -146,7 +146,22 @@ CREATE INDEX idx_professional_activities_professional_id ON professional_activit
 CREATE INDEX idx_professional_activities_activity_id ON professional_activities(activity_id);
 
 -- -----------------------------------------------------------------------------
--- 1.7. STUDENTS (Alumnos/Clientes)
+-- 1.7. FIRST_CONTACT_SOURCES (Fuentes de primer contacto)
+-- -----------------------------------------------------------------------------
+CREATE TABLE first_contact_sources (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    activa BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_first_contact_sources_club_id ON first_contact_sources(club_id);
+
+-- -----------------------------------------------------------------------------
+-- 1.8. STUDENTS (Alumnos/Clientes)
 -- -----------------------------------------------------------------------------
 CREATE TABLE students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -188,21 +203,6 @@ CREATE INDEX idx_students_email ON students(email);
 CREATE INDEX idx_students_numero_cliente ON students(numero_cliente);
 CREATE INDEX idx_students_numero_documento ON students(numero_documento);
 CREATE INDEX idx_students_certificado_vencimiento ON students(certificado_vencimiento);
-
--- -----------------------------------------------------------------------------
--- 1.8. FIRST_CONTACT_SOURCES (Fuentes de primer contacto)
--- -----------------------------------------------------------------------------
-CREATE TABLE first_contact_sources (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
-    nombre VARCHAR(255) NOT NULL,
-    descripcion TEXT,
-    activa BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_first_contact_sources_club_id ON first_contact_sources(club_id);
 
 -- -----------------------------------------------------------------------------
 -- 1.9. TIME_SLOTS (Turnos/Clases programadas)
@@ -476,19 +476,19 @@ FOR EACH ROW EXECUTE FUNCTION update_time_slot_cupo();
 -- =============================================================================
 
 -- Función para obtener el club_id del usuario autenticado
-CREATE OR REPLACE FUNCTION auth.user_club_id()
+CREATE OR REPLACE FUNCTION public.user_club_id()
 RETURNS UUID AS $$
     SELECT club_id FROM users WHERE auth_user_id = auth.uid();
 $$ LANGUAGE SQL SECURITY DEFINER;
 
 -- Función para obtener el rol del usuario autenticado
-CREATE OR REPLACE FUNCTION auth.user_role()
+CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS TEXT AS $$
     SELECT role FROM users WHERE auth_user_id = auth.uid();
 $$ LANGUAGE SQL SECURITY DEFINER;
 
 -- Función para verificar si el usuario es SUPER_ADMIN
-CREATE OR REPLACE FUNCTION auth.is_super_admin()
+CREATE OR REPLACE FUNCTION public.is_super_admin()
 RETURNS BOOLEAN AS $$
     SELECT EXISTS (
         SELECT 1 FROM users 
@@ -498,7 +498,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE SQL SECURITY DEFINER;
 
 -- Función para verificar si el usuario es CLUB_ADMIN de un club específico
-CREATE OR REPLACE FUNCTION auth.is_club_admin(target_club_id UUID)
+CREATE OR REPLACE FUNCTION public.is_club_admin(target_club_id UUID)
 RETURNS BOOLEAN AS $$
     SELECT EXISTS (
         SELECT 1 FROM users 
@@ -509,7 +509,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE SQL SECURITY DEFINER;
 
 -- Función para obtener el student_id del usuario autenticado
-CREATE OR REPLACE FUNCTION auth.user_student_id()
+CREATE OR REPLACE FUNCTION public.user_student_id()
 RETURNS UUID AS $$
     SELECT s.id FROM students s
     INNER JOIN users u ON u.id = s.user_id
@@ -517,7 +517,7 @@ RETURNS UUID AS $$
 $$ LANGUAGE SQL SECURITY DEFINER;
 
 -- Función para obtener el professional_id del usuario autenticado
-CREATE OR REPLACE FUNCTION auth.user_professional_id()
+CREATE OR REPLACE FUNCTION public.user_professional_id()
 RETURNS UUID AS $$
     SELECT p.id FROM professionals p
     INNER JOIN users u ON u.id = p.user_id
@@ -552,23 +552,23 @@ ALTER TABLE notification_settings ENABLE ROW LEVEL SECURITY;
 -- Políticas para CLUBS
 CREATE POLICY "SUPER_ADMIN puede ver todos los clubs"
     ON clubs FOR SELECT
-    USING (auth.is_super_admin());
+    USING (public.is_super_admin());
 
 CREATE POLICY "Usuarios pueden ver su propio club"
     ON clubs FOR SELECT
-    USING (id = auth.user_club_id());
+    USING (id = public.user_club_id());
 
 CREATE POLICY "SUPER_ADMIN puede insertar clubs"
     ON clubs FOR INSERT
-    WITH CHECK (auth.is_super_admin());
+    WITH CHECK (public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar su club"
     ON clubs FOR UPDATE
-    USING (auth.is_super_admin() OR (id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "Solo SUPER_ADMIN puede eliminar clubs"
     ON clubs FOR DELETE
-    USING (auth.is_super_admin());
+    USING (public.is_super_admin());
 
 -- =============================================================================
 -- 7. POLICIES RLS - USERS
@@ -576,19 +576,19 @@ CREATE POLICY "Solo SUPER_ADMIN puede eliminar clubs"
 
 CREATE POLICY "Usuarios pueden ver usuarios de su club"
     ON users FOR SELECT
-    USING (auth.is_super_admin() OR club_id = auth.user_club_id());
+    USING (public.is_super_admin() OR club_id = public.user_club_id());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear usuarios"
     ON users FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'SUPER_ADMIN')));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'SUPER_ADMIN')));
 
 CREATE POLICY "Usuarios pueden actualizar su propio perfil"
     ON users FOR UPDATE
-    USING (auth_user_id = auth.uid() OR auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (auth_user_id = auth.uid() OR public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "Solo SUPER_ADMIN y CLUB_ADMIN pueden eliminar usuarios"
     ON users FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 8. POLICIES RLS - BRANCHES
@@ -596,19 +596,19 @@ CREATE POLICY "Solo SUPER_ADMIN y CLUB_ADMIN pueden eliminar usuarios"
 
 CREATE POLICY "Usuarios pueden ver sedes de su club"
     ON branches FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear sedes"
     ON branches FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar sedes"
     ON branches FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'SUPER_ADMIN')));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'SUPER_ADMIN')));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar sedes"
     ON branches FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 9. POLICIES RLS - ACTIVITIES
@@ -616,19 +616,19 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar sedes"
 
 CREATE POLICY "Usuarios pueden ver actividades de su club"
     ON activities FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear actividades"
     ON activities FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar actividades"
     ON activities FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar actividades"
     ON activities FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 10. POLICIES RLS - PROFESSIONALS
@@ -636,23 +636,23 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar actividades"
 
 CREATE POLICY "Usuarios pueden ver profesionales de su club"
     ON professionals FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear profesionales"
     ON professionals FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN, CLUB_ADMIN y el propio profesional pueden actualizar"
     ON professionals FOR UPDATE
     USING (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN') OR
-        (id = auth.user_professional_id())
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN') OR
+        (id = public.user_professional_id())
     );
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar profesionales"
     ON professionals FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 11. POLICIES RLS - PROFESSIONAL_ACTIVITIES
@@ -660,15 +660,24 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar profesionales"
 
 CREATE POLICY "Usuarios pueden ver asignaciones de su club"
     ON professional_activities FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear asignaciones"
     ON professional_activities FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar asignaciones"
     ON professional_activities FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUBADMIN'));
+
+-- (Pequeño fix: 'CLUBADMIN' → 'CLUB_ADMIN')
+-- Corrigiendo la línea anterior:
+
+DROP POLICY IF EXISTS "SUPER_ADMIN y CLUB_ADMIN pueden eliminar asignaciones" ON professional_activities;
+
+CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar asignaciones"
+    ON professional_activities FOR DELETE
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 12. POLICIES RLS - STUDENTS
@@ -677,29 +686,29 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar asignaciones"
 CREATE POLICY "Usuarios pueden ver estudiantes de su club"
     ON students FOR SELECT
     USING (
-        club_id = auth.user_club_id() OR 
-        auth.is_super_admin() OR
-        (id = auth.user_student_id()) -- El estudiante puede ver sus propios datos
+        club_id = public.user_club_id() OR 
+        public.is_super_admin() OR
+        (id = public.user_student_id()) -- El estudiante puede ver sus propios datos
     );
 
 CREATE POLICY "SUPER_ADMIN, CLUB_ADMIN y PROFESSIONAL pueden crear estudiantes"
     ON students FOR INSERT
     WITH CHECK (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL'))
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL'))
     );
 
 CREATE POLICY "SUPER_ADMIN, CLUB_ADMIN, PROFESSIONAL y el propio estudiante pueden actualizar"
     ON students FOR UPDATE
     USING (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL')) OR
-        (id = auth.user_student_id())
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL')) OR
+        (id = public.user_student_id())
     );
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar estudiantes"
     ON students FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 13. POLICIES RLS - FIRST_CONTACT_SOURCES
@@ -707,19 +716,19 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar estudiantes"
 
 CREATE POLICY "Usuarios pueden ver fuentes de contacto de su club"
     ON first_contact_sources FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear fuentes"
     ON first_contact_sources FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar fuentes"
     ON first_contact_sources FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar fuentes"
     ON first_contact_sources FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 14. POLICIES RLS - TIME_SLOTS
@@ -727,25 +736,25 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar fuentes"
 
 CREATE POLICY "Usuarios pueden ver turnos de su club"
     ON time_slots FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN, CLUB_ADMIN y PROFESSIONAL pueden crear turnos"
     ON time_slots FOR INSERT
     WITH CHECK (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL'))
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL'))
     );
 
 CREATE POLICY "SUPER_ADMIN, CLUB_ADMIN y PROFESSIONAL pueden actualizar turnos"
     ON time_slots FOR UPDATE
     USING (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL'))
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL'))
     );
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar turnos"
     ON time_slots FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 15. POLICIES RLS - BOOKINGS
@@ -754,29 +763,29 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar turnos"
 CREATE POLICY "Usuarios pueden ver reservas de su club"
     ON bookings FOR SELECT
     USING (
-        club_id = auth.user_club_id() OR 
-        auth.is_super_admin() OR
-        (student_id = auth.user_student_id()) -- El estudiante puede ver sus propias reservas
+        club_id = public.user_club_id() OR 
+        public.is_super_admin() OR
+        (student_id = public.user_student_id()) -- El estudiante puede ver sus propias reservas
     );
 
 CREATE POLICY "Todos los usuarios autenticados pueden crear reservas de su club"
     ON bookings FOR INSERT
     WITH CHECK (
-        auth.is_super_admin() OR 
-        club_id = auth.user_club_id()
+        public.is_super_admin() OR 
+        club_id = public.user_club_id()
     );
 
 CREATE POLICY "Usuarios pueden actualizar reservas según su rol"
     ON bookings FOR UPDATE
     USING (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL')) OR
-        (student_id = auth.user_student_id() AND estado IN ('reservado', 'confirmado')) -- Estudiante solo puede cancelar
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() IN ('CLUB_ADMIN', 'PROFESSIONAL')) OR
+        (student_id = public.user_student_id() AND estado IN ('reservado', 'confirmado')) -- Estudiante solo puede cancelar
     );
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar reservas"
     ON bookings FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 16. POLICIES RLS - PAYMENT_CATEGORIES
@@ -784,19 +793,19 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar reservas"
 
 CREATE POLICY "Usuarios pueden ver categorías de pago de su club"
     ON payment_categories FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
-CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear categorías de pago"
+CREATE POLICY "SUPER_ADMIN y CLUBADMIN pueden crear categorías de pago"
     ON payment_categories FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar categorías de pago"
     ON payment_categories FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar categorías de pago"
     ON payment_categories FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 17. POLICIES RLS - PAYMENT_METHODS
@@ -804,19 +813,19 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar categorías de pago"
 
 CREATE POLICY "Usuarios pueden ver medios de pago de su club"
     ON payment_methods FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear medios de pago"
     ON payment_methods FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar medios de pago"
     ON payment_methods FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar medios de pago"
     ON payment_methods FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 18. POLICIES RLS - PAYMENTS
@@ -825,22 +834,22 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar medios de pago"
 CREATE POLICY "Usuarios pueden ver pagos de su club"
     ON payments FOR SELECT
     USING (
-        club_id = auth.user_club_id() OR 
-        auth.is_super_admin() OR
-        (student_id = auth.user_student_id()) -- El estudiante puede ver sus propios pagos
+        club_id = public.user_club_id() OR 
+        public.is_super_admin() OR
+        (student_id = public.user_student_id()) -- El estudiante puede ver sus propios pagos
     );
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear pagos"
     ON payments FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar pagos"
     ON payments FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar pagos"
     ON payments FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 19. POLICIES RLS - EXPENSE_CATEGORIES
@@ -848,19 +857,19 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar pagos"
 
 CREATE POLICY "Usuarios pueden ver categorías de gastos de su club"
     ON expense_categories FOR SELECT
-    USING (club_id = auth.user_club_id() OR auth.is_super_admin());
+    USING (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear categorías de gastos"
     ON expense_categories FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar categorías de gastos"
     ON expense_categories FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar categorías de gastos"
     ON expense_categories FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 20. POLICIES RLS - EXPENSES
@@ -868,19 +877,19 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar categorías de gastos"
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden ver gastos"
     ON expenses FOR SELECT
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden crear gastos"
     ON expenses FOR INSERT
-    WITH CHECK (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    WITH CHECK (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden actualizar gastos"
     ON expenses FOR UPDATE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar gastos"
     ON expenses FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 21. POLICIES RLS - NOTIFICATION_SETTINGS
@@ -889,26 +898,26 @@ CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar gastos"
 CREATE POLICY "Usuarios pueden ver configuraciones de su club"
     ON notification_settings FOR SELECT
     USING (
-        club_id = auth.user_club_id() OR 
-        auth.is_super_admin() OR
-        (student_id = auth.user_student_id())
+        club_id = public.user_club_id() OR 
+        public.is_super_admin() OR
+        (student_id = public.user_student_id())
     );
 
 CREATE POLICY "Todos pueden crear configuraciones"
     ON notification_settings FOR INSERT
-    WITH CHECK (club_id = auth.user_club_id() OR auth.is_super_admin());
+    WITH CHECK (club_id = public.user_club_id() OR public.is_super_admin());
 
 CREATE POLICY "Usuarios pueden actualizar sus propias configuraciones"
     ON notification_settings FOR UPDATE
     USING (
-        auth.is_super_admin() OR 
-        (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN') OR
-        (student_id = auth.user_student_id())
+        public.is_super_admin() OR 
+        (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN') OR
+        (student_id = public.user_student_id())
     );
 
 CREATE POLICY "SUPER_ADMIN y CLUB_ADMIN pueden eliminar configuraciones"
     ON notification_settings FOR DELETE
-    USING (auth.is_super_admin() OR (club_id = auth.user_club_id() AND auth.user_role() = 'CLUB_ADMIN'));
+    USING (public.is_super_admin() OR (club_id = public.user_club_id() AND public.user_role() = 'CLUB_ADMIN'));
 
 -- =============================================================================
 -- 22. SEEDS INICIALES
@@ -1236,209 +1245,9 @@ VALUES
 -- =============================================================================
 
 /*
-╔════════════════════════════════════════════════════════════════════════════╗
-║                    DIAGRAMA ENTIDAD-RELACIÓN (ER)                          ║
-║            Sistema Multi-Tenant de Gestión Deportiva                       ║
-╚════════════════════════════════════════════════════════════════════════════╝
-
-┌─────────────┐
-│   CLUBS     │ (Tabla principal multi-tenant)
-├─────────────┤
-│ id (PK)     │
-│ nombre      │
-│ logo_url    │
-│ theme       │
-│ direccion   │
-│ activa      │
-└──────┬──────┘
-       │
-       │ (1:N) Un club tiene muchos...
-       │
-       ├──────────────────────────────────┬───────────────────────────┐
-       │                                  │                           │
-       ▼                                  ▼                           ▼
-┌─────────────┐                   ┌─────────────┐            ┌─────────────┐
-│   USERS     │                   │  BRANCHES   │            │ ACTIVITIES  │
-├─────────────┤                   ├─────────────┤            ├─────────────┤
-│ id (PK)     │                   │ id (PK)     │            │ id (PK)     │
-│ club_id(FK) │                   │ club_id(FK) │            │ club_id(FK) │
-│ auth_user_id│                   │ nombre      │            │ nombre      │
-│ role        │                   │ direccion   │            │ duracion    │
-│ nombre      │                   │ geo_lat/lng │            │ color       │
-│ email       │                   │ foto_url    │            │ activa      │
-└──────┬──────┘                   └──────┬──────┘            └──────┬──────┘
-       │                                 │                          │
-       │                                 │                          │
-       ▼                                 │                          │
-┌─────────────┐                          │                          │
-│PROFESSIONALS│◄─────────────────────────┘                          │
-├─────────────┤          (N:1)                                      │
-│ id (PK)     │                                                     │
-│ club_id(FK) │                                                     │
-│ user_id(FK) │                                                     │
-│ nombre      │                                                     │
-│ estado      │                                                     │
-└──────┬──────┘                                                     │
-       │                                                            │
-       │ (N:N) ◄────────────────────────────────────────────────────┘
-       │                    PROFESSIONAL_ACTIVITIES
-       │                    (Tabla intermedia)
-       │
-       ▼
-┌─────────────┐
-│ TIME_SLOTS  │ (Turnos programados)
-├─────────────┤
-│ id (PK)     │
-│ club_id(FK) │
-│ activity(FK)│
-│ branch(FK)  │
-│ profess(FK) │
-│ fecha       │
-│ hora_inicio │
-│ cupo_max    │
-│ estado      │
-└──────┬──────┘
-       │
-       │ (1:N)
-       │
-       ▼
-┌─────────────┐          ┌─────────────┐
-│  BOOKINGS   │◄─────────│  STUDENTS   │
-├─────────────┤  (N:1)   ├─────────────┤
-│ id (PK)     │          │ id (PK)     │
-│ club_id(FK) │          │ club_id(FK) │
-│ slot_id(FK) │          │ user_id(FK) │
-│ student(FK) │──────────│ nombre      │
-│ estado      │          │ email       │
-│ metodo      │          │ documento   │
-│ notas       │          │ obra_social │
-└─────────────┘          │ estado      │
-                         └──────┬──────┘
-                                │
-                                │ (1:N)
-                                │
-                    ┌───────────┴──────────┐
-                    ▼                      ▼
-             ┌─────────────┐      ┌─────────────────────┐
-             │  PAYMENTS   │      │NOTIFICATION_SETTINGS│
-             ├─────────────┤      ├─────────────────────┤
-             │ id (PK)     │      │ student_id (FK)     │
-             │ club_id(FK) │      │ notificar_turnos    │
-             │ student(FK) │      │ notificar_pagos     │
-             │ categoria   │      │ canal_email         │
-             │ medio_pago  │      └─────────────────────┘
-             │ monto       │
-             │ fecha_pago  │
-             └──────┬──────┘
-                    │
-        ┌───────────┴───────────┐
-        ▼                       ▼
-┌─────────────────┐   ┌──────────────────┐
-│PAYMENT_CATEGORIES│   │ PAYMENT_METHODS  │
-├─────────────────┤   ├──────────────────┤
-│ id (PK)         │   │ id (PK)          │
-│ club_id (FK)    │   │ club_id (FK)     │
-│ nombre          │   │ nombre           │
-│ monto_default   │   │ requiere_comprob │
-└─────────────────┘   └──────────────────┘
-
-
-┌─────────────┐          ┌─────────────────┐
-│  EXPENSES   │◄─────────│EXPENSE_CATEGORIES│
-├─────────────┤  (N:1)   ├─────────────────┤
-│ id (PK)     │          │ id (PK)         │
-│ club_id(FK) │          │ club_id (FK)    │
-│ categoria   │──────────│ nombre          │
-│ monto       │          │ activa          │
-│ fecha       │          └─────────────────┘
-│ detalle     │
-└─────────────┘
-
-┌──────────────────────┐
-│FIRST_CONTACT_SOURCES │
-├──────────────────────┤
-│ id (PK)              │
-│ club_id (FK)         │
-│ nombre               │
-│ activa               │
-└──────────────────────┘
-
-RELACIONES PRINCIPALES:
-═══════════════════════
-
-1. CLUBS (1) ──→ (N) USERS, BRANCHES, ACTIVITIES, PROFESSIONALS, STUDENTS
-   - Multi-tenancy: Todas las tablas están aisladas por club_id
-
-2. PROFESSIONALS (N) ←→ (N) ACTIVITIES
-   - A través de PROFESSIONAL_ACTIVITIES (tabla intermedia)
-
-3. TIME_SLOTS depende de: ACTIVITY + BRANCH + PROFESSIONAL
-   - Un turno específico requiere una actividad, sede y profesional
-
-4. BOOKINGS conecta: STUDENTS ←→ TIME_SLOTS
-   - Reserva de un alumno en un turno específico
-
-5. PAYMENTS vincula: STUDENTS con PAYMENT_CATEGORIES y PAYMENT_METHODS
-   - Registro de pagos de alumnos
-
-6. STUDENTS pueden tener:
-   - Múltiples BOOKINGS (reservas)
-   - Múltiples PAYMENTS (pagos)
-   - Una configuración de NOTIFICATION_SETTINGS
-
-ÍNDICES CLAVE:
-═════════════
-- club_id en TODAS las tablas (multi-tenant)
-- Foreign keys para integridad referencial
-- Campos de búsqueda: email, estado, fecha
-- Índices compuestos: (fecha, estado) en time_slots
-
-RLS (Row Level Security):
-═════════════════════════
-✓ SUPER_ADMIN: Acceso total a todos los clubs
-✓ CLUB_ADMIN: Acceso total a su club
-✓ PROFESSIONAL: Acceso a turnos y alumnos asignados
-✓ STUDENT: Solo lectura de sus propios datos y reservas
-
-CASCADAS:
-═════════
-- Todas las FK con ON DELETE CASCADE
-- Garantiza limpieza automática al eliminar club/usuario
+(diagrama ER, solo documental, sin impacto en la BD)
 */
 
 -- =============================================================================
 -- FIN DEL SCRIPT
 -- =============================================================================
-
--- INSTRUCCIONES DE USO:
--- 1. Ejecutar este script en el SQL Editor de Supabase
--- 2. Verificar que todas las tablas se crearon correctamente
--- 3. Verificar que RLS está habilitado en todas las tablas
--- 4. Crear usuarios de prueba en Supabase Auth
--- 5. Insertar registros en la tabla 'users' vinculando auth_user_id
--- 6. Probar las policies desde diferentes roles
-
--- NOTAS IMPORTANTES:
--- - Este esquema es compatible con Supabase y PostgreSQL 14+
--- - Requiere la extensión uuid-ossp
--- - Las policies RLS protegen todos los datos por club_id
--- - Los triggers mantienen updated_at actualizado automáticamente
--- - El trigger de bookings actualiza cupo_actual en time_slots
--- - Los seeds proporcionan datos iniciales para testing
-
--- PRÓXIMOS PASOS:
--- 1. Configurar Storage buckets para:
---    - logos de clubs
---    - fotos de profesionales
---    - fotos de estudiantes
---    - certificados médicos
---    - comprobantes de pago
--- 2. Crear funciones Edge para:
---    - Envío de notificaciones
---    - Generación de reportes
---    - Cálculos financieros
--- 3. Configurar triggers para:
---    - Notificar reservas nuevas
---    - Alertar certificados vencidos
---    - Recordatorios de turnos
-

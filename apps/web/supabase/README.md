@@ -7,7 +7,9 @@ Esta carpeta contiene toda la documentación relacionada con la base de datos Su
 ## 📚 Archivos Disponibles
 
 ### `supabase-schema.sql`
+
 **Script SQL ejecutable completo** con:
+
 - 16 tablas completamente relacionadas
 - Row Level Security (RLS) habilitado
 - 70+ policies por rol
@@ -16,6 +18,7 @@ Esta carpeta contiene toda la documentación relacionada con la base de datos Su
 - Funciones auxiliares
 
 **Cómo usar:**
+
 1. Abre Supabase Dashboard
 2. Ve a SQL Editor
 3. Copia y pega el contenido de este archivo
@@ -24,7 +27,9 @@ Esta carpeta contiene toda la documentación relacionada con la base de datos Su
 ---
 
 ### `SUPABASE-SETUP.md`
+
 **Guía completa de instalación** paso a paso:
+
 - Requisitos previos
 - Instalación del schema
 - Configuración de Storage
@@ -35,7 +40,9 @@ Esta carpeta contiene toda la documentación relacionada con la base de datos Su
 ---
 
 ### `SUPABASE-INTEGRATION.md`
+
 **Guía de integración con Next.js**:
+
 - Configuración inicial
 - Cliente de Supabase (browser y server)
 - Tipos TypeScript generados
@@ -48,7 +55,9 @@ Esta carpeta contiene toda la documentación relacionada con la base de datos Su
 ---
 
 ### `DATABASE-DIAGRAM.md`
+
 **Diagrama ER visual completo**:
+
 - Arquitectura multi-tenant
 - Relaciones entre tablas
 - Índices y triggers
@@ -58,7 +67,9 @@ Esta carpeta contiene toda la documentación relacionada con la base de datos Su
 ---
 
 ### `README-SUPABASE.md`
+
 **Documentación general**:
+
 - Índice de toda la documentación
 - Resumen del modelo de datos
 - Instrucciones de uso
@@ -104,25 +115,25 @@ npx supabase gen types typescript --project-id "tu-project-id" > lib/supabase/ty
 
 ### 16 Tablas Implementadas
 
-| Categoría | Tablas |
-|-----------|--------|
-| **Core** | clubs, users, students, professionals |
-| **Operaciones** | branches, activities, time_slots, bookings |
-| **Finanzas** | payments, payment_categories, payment_methods |
-| **Gastos** | expenses, expense_categories |
-| **Config** | notification_settings, first_contact_sources |
-| **Relaciones** | professional_activities |
+| Categoría       | Tablas                                        |
+| --------------- | --------------------------------------------- |
+| **Core**        | clubs, users, students, professionals         |
+| **Operaciones** | branches, activities, time_slots, bookings    |
+| **Finanzas**    | payments, payment_categories, payment_methods |
+| **Gastos**      | expenses, expense_categories                  |
+| **Config**      | notification_settings, first_contact_sources  |
+| **Relaciones**  | professional_activities                       |
 
 ---
 
 ## 🔐 Roles y Permisos
 
-| Rol | Acceso |
-|-----|--------|
-| `SUPER_ADMIN` | Todos los clubs |
-| `CLUB_ADMIN` | Solo su club (completo) |
+| Rol            | Acceso                     |
+| -------------- | -------------------------- |
+| `SUPER_ADMIN`  | Todos los clubs            |
+| `CLUB_ADMIN`   | Solo su club (completo)    |
 | `PROFESSIONAL` | Turnos y alumnos asignados |
-| `STUDENT` | Solo sus propios datos |
+| `STUDENT`      | Solo sus propios datos     |
 
 ---
 
@@ -148,4 +159,6 @@ Para más detalles, revisa cada archivo en orden:
 ---
 
 **Desarrollado con ❤️ para la gestión deportiva moderna**
+
+
 
