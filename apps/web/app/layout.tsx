@@ -1,5 +1,9 @@
+import { cn } from "@/lib/utils/cn";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Gestión Multi-Club",
@@ -13,10 +17,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className="theme-neutral" suppressHydrationWarning>
+      <body
+        className={cn(inter.variable, "theme-neutral antialiased font-sans")}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
   );
 }
-
