@@ -253,3 +253,6 @@ Para probar como student:
 - Modificar `localStorage.setItem("mock_user_role", "student")` en el login
 - O usar las cookies directamente
 
+
+
+

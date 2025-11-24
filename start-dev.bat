@@ -10,3 +10,6 @@ echo Presiona Ctrl+C para detener el servidor
 echo.
 pnpm dev
 
+
+
+
