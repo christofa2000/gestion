@@ -1,62 +1,55 @@
 "use client";
 
-import { useState } from 'react';
-import { 
-  Users, 
-  Calendar, 
-  CreditCard, 
-  TrendingUp,
-  Clock,
-  ArrowRight,
-  Plus,
-  Search,
-  UserPlus,
-  List,
-  Banknote,
-  CheckCircle,
-  Building2,
-  Edit,
-  RefreshCw,
-  Cake
-} from 'lucide-react';
-import { 
-  Button, 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent,
-  StatCard,
+import { DashboardTabs } from "@/components/admin/DashboardTabs";
+import {
   Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
-  Input
-} from '@repo/ui';
-import Link from 'next/link';
-import { DashboardTabs } from '@/components/admin/DashboardTabs';
-import { Zap } from 'lucide-react';
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui";
+import {
+  ArrowRight,
+  Banknote,
+  Building2,
+  Cake,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Edit,
+  List,
+  RefreshCw,
+  UserPlus,
+  Zap,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('inicio');
-  const [openTabs, setOpenTabs] = useState(['inicio', 'agenda']);
+  const [activeTab, setActiveTab] = useState("inicio");
+  const [openTabs, setOpenTabs] = useState(["inicio", "agenda"]);
 
   const tabs = [
-    { id: 'inicio', label: 'Panel de inicio', icon: Zap },
-    { id: 'agenda', label: 'Agenda diaria', icon: Calendar },
-  ].filter(tab => openTabs.includes(tab.id));
+    { id: "inicio", label: "Panel de inicio", icon: Zap },
+    { id: "agenda", label: "Agenda diaria", icon: Calendar },
+  ].filter((tab) => openTabs.includes(tab.id));
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
   };
 
   const handleTabClose = (tabId: string) => {
-    if (tabId === 'inicio') return; // No permitir cerrar el tab principal
-    setOpenTabs(openTabs.filter(id => id !== tabId));
+    if (tabId === "inicio") return; // No permitir cerrar el tab principal
+    setOpenTabs(openTabs.filter((id) => id !== tabId));
     if (activeTab === tabId) {
-      setActiveTab('inicio');
+      setActiveTab("inicio");
     }
   };
 
@@ -68,10 +61,10 @@ export default function AdminDashboard() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onTabClose={handleTabClose}
-        closableTabs={['agenda']}
+        closableTabs={["agenda"]}
       />
       {/* Contenido según tab activo */}
-      {activeTab === 'inicio' && (
+      {activeTab === "inicio" && (
         <div className="space-y-8">
           {/* Botones de Acción Principales - Estilo Referencia */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -80,7 +73,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
                   <UserPlus className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                 </div>
-                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Crear un Cliente</span>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">
+                  Crear un Cliente
+                </span>
               </button>
             </Link>
 
@@ -89,7 +84,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
                   <List className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                 </div>
-                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Listado de Clientes</span>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">
+                  Listado de Clientes
+                </span>
               </button>
             </Link>
 
@@ -98,7 +95,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
                   <Banknote className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                 </div>
-                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Registrar un pago</span>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">
+                  Registrar un pago
+                </span>
               </button>
             </Link>
 
@@ -107,7 +106,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-full bg-[var(--color-primary-soft)] flex items-center justify-center mb-3 group-hover:bg-[var(--color-primary)] transition-colors">
                   <CheckCircle className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                 </div>
-                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">Agenda diaria</span>
+                <span className="text-sm font-semibold text-[var(--color-text-main)] text-center">
+                  Agenda diaria
+                </span>
               </button>
             </Link>
           </div>
@@ -119,7 +120,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-lg bg-[var(--color-primary-soft)] flex items-center justify-center group-hover:bg-[var(--color-primary)] transition-colors">
                   <Building2 className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                 </div>
-                <span className="text-base font-semibold text-[var(--color-text-main)]">Sede Caballito</span>
+                <span className="text-base font-semibold text-[var(--color-text-main)]">
+                  Sede Caballito
+                </span>
               </button>
             </Link>
 
@@ -128,7 +131,9 @@ export default function AdminDashboard() {
                 <div className="w-12 h-12 rounded-lg bg-[var(--color-primary-soft)] flex items-center justify-center group-hover:bg-[var(--color-primary)] transition-colors">
                   <Building2 className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
                 </div>
-                <span className="text-base font-semibold text-[var(--color-text-main)]">Sede Nuñez</span>
+                <span className="text-base font-semibold text-[var(--color-text-main)]">
+                  Sede Nuñez
+                </span>
               </button>
             </Link>
           </div>
@@ -166,7 +171,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'agenda' && (
+      {activeTab === "agenda" && (
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -192,11 +197,41 @@ export default function AdminDashboard() {
                 </TableHeader>
                 <TableBody>
                   {[
-                    { time: "18:00", activity: "Tenis - Adultos", court: "Cancha 1", prof: "Juan Pérez", status: "confirmed" },
-                    { time: "19:00", activity: "Fútbol 5", court: "Cancha Principal", prof: "-", status: "pending" },
-                    { time: "19:30", activity: "Tenis - Niños", court: "Cancha 2", prof: "Ana Silva", status: "confirmed" },
-                    { time: "20:00", activity: "Padel", court: "Cancha Cristal", prof: "-", status: "cancelled" },
-                    { time: "21:00", activity: "Fútbol 7", court: "Cancha Principal", prof: "-", status: "confirmed" },
+                    {
+                      time: "18:00",
+                      activity: "Tenis - Adultos",
+                      court: "Cancha 1",
+                      prof: "Juan Pérez",
+                      status: "confirmed",
+                    },
+                    {
+                      time: "19:00",
+                      activity: "Fútbol 5",
+                      court: "Cancha Principal",
+                      prof: "-",
+                      status: "pending",
+                    },
+                    {
+                      time: "19:30",
+                      activity: "Tenis - Niños",
+                      court: "Cancha 2",
+                      prof: "Ana Silva",
+                      status: "confirmed",
+                    },
+                    {
+                      time: "20:00",
+                      activity: "Padel",
+                      court: "Cancha Cristal",
+                      prof: "-",
+                      status: "cancelled",
+                    },
+                    {
+                      time: "21:00",
+                      activity: "Fútbol 7",
+                      court: "Cancha Principal",
+                      prof: "-",
+                      status: "confirmed",
+                    },
                   ].map((turno, i) => (
                     <TableRow key={i}>
                       <TableCell>
@@ -209,14 +244,20 @@ export default function AdminDashboard() {
                       <TableCell>{turno.court}</TableCell>
                       <TableCell>{turno.prof}</TableCell>
                       <TableCell>
-                        <Badge variant={
-                          turno.status === 'confirmed' ? 'success' : 
-                          turno.status === 'pending' ? 'warning' : 
-                          'error'
-                        }>
-                          {turno.status === 'confirmed' ? 'Confirmado' : 
-                           turno.status === 'pending' ? 'Pendiente' : 
-                           'Cancelado'}
+                        <Badge
+                          variant={
+                            turno.status === "confirmed"
+                              ? "success"
+                              : turno.status === "pending"
+                                ? "warning"
+                                : "error"
+                          }
+                        >
+                          {turno.status === "confirmed"
+                            ? "Confirmado"
+                            : turno.status === "pending"
+                              ? "Pendiente"
+                              : "Cancelado"}
                         </Badge>
                       </TableCell>
                     </TableRow>
