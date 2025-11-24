@@ -47,13 +47,25 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             >
               Demo
             </Link>
-            <Link
-              href="/auth/login"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white"
-              style={{ backgroundColor: "var(--color-primary)" }}
-            >
-              Iniciar Sesión
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/auth/login?redirect=/admin"
+                className="px-3 py-2 rounded-lg text-xs font-medium text-white hidden sm:block"
+                style={{ backgroundColor: "var(--color-primary)" }}
+              >
+                Admin
+              </Link>
+              <Link
+                href="/auth/login?redirect=/student"
+                className="px-3 py-2 rounded-lg text-xs font-medium border"
+                style={{ 
+                  borderColor: "var(--color-border-subtle)",
+                  color: "var(--color-text-main)"
+                }}
+              >
+                Alumnos
+              </Link>
+            </div>
           </nav>
         </div>
       </header>
