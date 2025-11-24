@@ -19,6 +19,7 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,27 @@ const menuItems = [
     href: '/admin',
     icon: LayoutDashboard,
     roles: ['SUPER_ADMIN', 'CLUB_ADMIN', 'PROFESSIONAL'],
+  },
+  {
+    title: 'Super Admin',
+    href: '/superadmin',
+    icon: Shield,
+    roles: ['SUPER_ADMIN'],
+    superAdminOnly: true, // Solo mostrar cuando esté en ruta superadmin
+  },
+  {
+    title: 'Clubs',
+    href: '/superadmin/clubs',
+    icon: Building2,
+    roles: ['SUPER_ADMIN'],
+    superAdminOnly: true,
+  },
+  {
+    title: 'Usuarios Admin',
+    href: '/superadmin/usuarios',
+    icon: Shield,
+    roles: ['SUPER_ADMIN'],
+    superAdminOnly: true,
   },
   {
     title: 'Clientes',
@@ -103,8 +125,23 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
     window.dispatchEvent(new Event('sidebar-collapse-change'))
   }, [isCollapsed])
 
-  // Filtrar items según el rol
-  const filteredItems = menuItems.filter((item) => item.roles.includes(userRole))
+  // Filtrar items según el rol y la ruta actual
+  const isSuperAdminRoute = pathname.startsWith('/superadmin')
+  const filteredItems = menuItems.filter((item) => {
+    // Si el item es solo para superadmin
+    if (item.superAdminOnly) {
+      // Mostrarlo solo si el usuario es SUPER_ADMIN y está en ruta superadmin
+      return userRole === 'SUPER_ADMIN' && isSuperAdminRoute
+    }
+    // Para items normales, mostrar solo si el usuario tiene el rol necesario
+    // Si estamos en ruta superadmin, también mostrar items de admin normal para SUPER_ADMIN
+    if (isSuperAdminRoute && userRole === 'SUPER_ADMIN') {
+      // En rutas superadmin, mostrar también las opciones normales de admin
+      return item.roles.includes(userRole)
+    }
+    // En rutas normales de admin, filtrar por rol
+    return item.roles.includes(userRole)
+  })
 
   return (
     <>
@@ -130,7 +167,8 @@ export default function AdminSidebar({ userName, userRole }: AdminSidebarProps) 
         <nav className={cn('flex-1 space-y-1 overflow-y-auto', isCollapsed ? 'px-2 py-6' : 'px-4 py-6')}>
           {filteredItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            // Para rutas anidadas, verificar si el pathname empieza con el href
+            const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href + '/'))
 
             return (
               <Link

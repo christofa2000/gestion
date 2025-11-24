@@ -1,25 +1,50 @@
-export default function ConfiguracionUsuariosPage() {
+import { redirect } from 'next/navigation'
+import { getUser } from '@repo/supabase/server'
+import { isSuperAdmin } from '@/lib/auth'
+import Link from 'next/link'
+
+export default async function ConfiguracionUsuariosPage() {
+  const user = await getUser()
+  
+  if (!user) {
+    redirect('/auth/login')
+  }
+
+  // Solo SUPER_ADMIN puede crear usuarios ADMIN
+  // Los CLUB_ADMIN solo pueden ver usuarios de su club, pero no crear otros ADMIN
+  const canCreateAdmin = isSuperAdmin(user)
+
   return (
     <div>
       <div className="mb-6">
-        <a href="/admin/configuraciones" className="text-sm mb-2 inline-block" style={{ color: "var(--color-primary)" }}>
+        <Link href="/admin/configuraciones" className="text-sm mb-2 inline-block" style={{ color: "var(--color-primary)" }}>
           ← Volver a configuraciones
-        </a>
+        </Link>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold" style={{ color: "var(--color-text-main)" }}>
               Usuarios y Roles
             </h1>
             <p style={{ color: "var(--color-text-muted)" }}>
-              Gestión de accesos y permisos
+              {canCreateAdmin 
+                ? 'Gestión de accesos y permisos (Solo SUPER_ADMIN puede crear usuarios ADMIN)'
+                : 'Ver usuarios de tu club (Solo SUPER_ADMIN puede crear nuevos usuarios ADMIN)'}
             </p>
           </div>
-          <button
-            className="px-4 py-2 rounded-lg font-medium text-white"
-            style={{ backgroundColor: "var(--color-primary)" }}
-          >
-            + Invitar Usuario
-          </button>
+          {canCreateAdmin ? (
+            <Link href="/superadmin/usuarios/nuevo">
+              <button
+                className="px-4 py-2 rounded-lg font-medium text-white"
+                style={{ backgroundColor: "var(--color-primary)" }}
+              >
+                + Crear Usuario Admin
+              </button>
+            </Link>
+          ) : (
+            <div className="px-4 py-2 rounded-lg text-sm" style={{ color: "var(--color-text-muted)", backgroundColor: "var(--color-surface)" }}>
+              Solo SUPER_ADMIN puede crear usuarios ADMIN
+            </div>
+          )}
         </div>
       </div>
 

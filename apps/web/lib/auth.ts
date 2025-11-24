@@ -134,6 +134,14 @@ export function canAccessFinancials(user: AuthUser): boolean {
   return isAdmin(user)
 }
 
+/**
+ * Verificar si el usuario puede crear usuarios ADMIN
+ * (solo SUPER_ADMIN puede crear usuarios ADMIN)
+ */
+export function canCreateAdminUsers(user: AuthUser): boolean {
+  return isSuperAdmin(user)
+}
+
 
 
 

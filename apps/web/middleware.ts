@@ -2,8 +2,9 @@
  * Middleware de autenticación y protección de rutas
  * 
  * Este middleware protege las rutas según el rol del usuario:
- * - Rutas admin: solo SUPER_ADMIN, CLUB_ADMIN, PROFESSIONAL
- * - Rutas student: solo STUDENT
+ * - Rutas superadmin: solo SUPER_ADMIN
+ * - Rutas admin: SUPER_ADMIN, CLUB_ADMIN, PROFESSIONAL
+ * - Rutas student: STUDENT (SUPER_ADMIN también puede acceder)
  * - Rutas auth: solo usuarios no autenticados
  * - Rutas públicas: acceso libre
  */
@@ -127,12 +128,37 @@ export async function middleware(request: NextRequest) {
   }
 
   // ========================================
-  // 4. RUTAS DE ADMIN
+  // 4. RUTAS DE SUPER_ADMIN (solo SUPER_ADMIN)
+  // ========================================
+  const isSuperAdminRoute = pathname.startsWith('/superadmin')
+  
+  if (isSuperAdminRoute) {
+    // Solo SUPER_ADMIN puede acceder
+    if (role === 'SUPER_ADMIN') {
+      return response
+    }
+    
+    // Cualquier otro rol, redirigir según corresponda
+    if (role === 'CLUB_ADMIN' || role === 'PROFESSIONAL') {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
+    
+    if (role === 'STUDENT') {
+      return NextResponse.redirect(new URL('/student', request.url))
+    }
+    
+    // No autenticado o rol inválido
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
+
+  // ========================================
+  // 5. RUTAS DE ADMIN
   // ========================================
   const isAdminRoute = pathname.startsWith('/admin')
   
   if (isAdminRoute) {
     // Verificar que el rol sea admin o professional
+    // SUPER_ADMIN también puede acceder a /admin
     if (role === 'SUPER_ADMIN' || role === 'CLUB_ADMIN' || role === 'PROFESSIONAL') {
       return response
     }
@@ -147,18 +173,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // ========================================
-  // 5. RUTAS DE STUDENT
+  // 6. RUTAS DE STUDENT
   // ========================================
   const isStudentRoute = pathname.startsWith('/student')
   
   if (isStudentRoute) {
     // Solo students pueden acceder
-    if (role === 'STUDENT') {
+    // SUPER_ADMIN también puede acceder para ver el portal de alumnos
+    if (role === 'STUDENT' || role === 'SUPER_ADMIN') {
       return response
     }
     
     // Si es admin/professional, redirigir a admin
-    if (role === 'SUPER_ADMIN' || role === 'CLUB_ADMIN' || role === 'PROFESSIONAL') {
+    if (role === 'CLUB_ADMIN' || role === 'PROFESSIONAL') {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
     
@@ -167,7 +194,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // ========================================
-  // 6. OTRAS RUTAS - Permitir acceso
+  // 7. OTRAS RUTAS - Permitir acceso
   // ========================================
   return response
 }
@@ -178,6 +205,9 @@ export async function middleware(request: NextRequest) {
 function redirectByRole(request: NextRequest, role: string) {
   switch (role) {
     case 'SUPER_ADMIN':
+      // SUPER_ADMIN puede ir a superadmin o admin
+      return NextResponse.redirect(new URL('/superadmin', request.url))
+      
     case 'CLUB_ADMIN':
       return NextResponse.redirect(new URL('/admin', request.url))
       
