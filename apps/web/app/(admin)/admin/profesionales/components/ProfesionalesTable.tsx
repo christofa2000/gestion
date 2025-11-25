@@ -10,6 +10,8 @@ import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Eye, Edit, ChevronLeft, ChevronRight, User } from 'lucide-react'
 import { Badge } from '@repo/ui'
+import { deleteProfesional } from '../actions'
+import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
 
 interface Profesional {
   id: string
@@ -143,6 +145,19 @@ export function ProfesionalesTable({
                       <Edit className="w-4 h-4" />
                     </button>
                   </Link>
+                  <DeleteConfirmDialog
+                    title="Eliminar Profesional"
+                    message="¿Estás seguro de que deseas eliminar este profesional? Esta acción no se puede deshacer."
+                    itemName={`${profesional.nombre} ${profesional.apellido}`}
+                    onConfirm={async () => {
+                      const result = await deleteProfesional(profesional.id)
+                      if (result.error) {
+                        throw new Error(result.error)
+                      }
+                      // Redirigir a la misma página para refrescar sin loops
+                      router.push(pathname)
+                    }}
+                  />
                 </div>
               </td>
             </tr>

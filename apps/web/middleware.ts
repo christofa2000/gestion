@@ -88,13 +88,22 @@ export async function middleware(request: NextRequest) {
   )
 
   // Obtener sesión del usuario
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  const isAuthenticated = !!session
-  const user = session?.user
-  const role = user?.user_metadata?.role as string | undefined
+  // V1: Usar getUser() en lugar de getSession() para evitar warnings y problemas de seguridad
+  let isAuthenticated = false
+  let user = null
+  let role: string | undefined = undefined
+  
+  try {
+    const { data: { user: authUser }, error } = await supabase.auth.getUser()
+    if (!error && authUser) {
+      isAuthenticated = true
+      user = authUser
+      role = authUser.user_metadata?.role as string | undefined
+    }
+  } catch (error) {
+    // Si hay error, el usuario no está autenticado
+    isAuthenticated = false
+  }
 
   // ========================================
   // 1. RUTAS PÚBLICAS
@@ -201,11 +210,16 @@ export async function middleware(request: NextRequest) {
 
 /**
  * Helper para redirigir según el rol del usuario
+ * 
+ * V1: Reglas de redirección consistentes con redirectByRole en lib/auth.ts:
+ * - SUPER_ADMIN → /superadmin
+ * - CLUB_ADMIN → /admin
+ * - PROFESSIONAL → /admin/turnos
+ * - STUDENT → /student
  */
 function redirectByRole(request: NextRequest, role: string) {
   switch (role) {
     case 'SUPER_ADMIN':
-      // SUPER_ADMIN puede ir a superadmin o admin
       return NextResponse.redirect(new URL('/superadmin', request.url))
       
     case 'CLUB_ADMIN':

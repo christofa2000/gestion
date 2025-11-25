@@ -7,8 +7,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Eye, Users, Clock, MapPin, UserCog, AlertCircle } from 'lucide-react'
 import { Badge } from '@repo/ui'
+import { deleteTurno } from '../actions'
+import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
 
 interface TimeSlot {
   id: string
@@ -28,6 +31,7 @@ interface TurnosGridProps {
 }
 
 export function TurnosGrid({ slots, reservasPorSlot }: TurnosGridProps) {
+  const router = useRouter()
   if (slots.length === 0) {
     return (
       <div className="p-12 text-center">
@@ -135,12 +139,27 @@ export function TurnosGrid({ slots, reservasPorSlot }: TurnosGridProps) {
                   )}
                 </div>
 
-                {/* Botón ver detalle */}
-                <Link href={`/admin/turnos/${slot.id}`}>
-                  <button className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-gray-100 transition-colors">
-                    <Eye className="w-5 h-5 text-[var(--color-text-muted)]" />
-                  </button>
-                </Link>
+                {/* Botones de acción */}
+                <div className="flex items-center gap-2">
+                  <Link href={`/admin/turnos/${slot.id}`}>
+                    <button className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-gray-100 transition-colors">
+                      <Eye className="w-5 h-5 text-[var(--color-text-muted)]" />
+                    </button>
+                  </Link>
+                  <DeleteConfirmDialog
+                    title="Eliminar Turno"
+                    message="¿Estás seguro de que deseas eliminar este turno? Se eliminarán también todas las reservas asociadas. Esta acción no se puede deshacer."
+                    itemName={`${slot.hora_inicio.substring(0, 5)} - ${slot.activities?.nombre || 'Sin actividad'}`}
+                    onConfirm={async () => {
+                      const result = await deleteTurno(slot.id)
+                      if (result.error) {
+                        throw new Error(result.error)
+                      }
+                      // Redirigir a la misma página para refrescar sin loops
+                      router.push('/admin/turnos')
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>

@@ -97,3 +97,4 @@ WHERE table_name IN ('users', 'students')
     AND grantee IN ('authenticated', 'postgres')
 ORDER BY table_name, grantee, privilege_type;
 
+

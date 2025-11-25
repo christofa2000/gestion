@@ -1,3 +1,15 @@
+/**
+ * Panel Admin - Dashboard
+ * 
+ * V1: Dashboard principal del panel administrativo
+ * 
+ * Reglas V1:
+ * - Solo CLUB_ADMIN, PROFESSIONAL y SUPER_ADMIN pueden acceder (verificado en layout)
+ * - Todas las queries deben filtrar por club_id del usuario actual (multi-tenant)
+ * - CLUB_ADMIN puede crear alumnos, profesionales y datos de su club
+ * - No puede crear otros CLUB_ADMIN (eso es solo SUPER_ADMIN)
+ */
+
 "use client";
 
 import { DashboardTabs } from "@/components/admin/DashboardTabs";
@@ -31,6 +43,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { SedesList } from "./components/SedesList";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("inicio");
@@ -114,29 +127,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Sedes */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link href="/admin/turnos?sedes=caballito" className="contents">
-              <button className="flex items-center gap-4 p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
-                <div className="w-12 h-12 rounded-lg bg-[var(--color-primary-soft)] flex items-center justify-center group-hover:bg-[var(--color-primary)] transition-colors">
-                  <Building2 className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
-                </div>
-                <span className="text-base font-semibold text-[var(--color-text-main)]">
-                  Sede Caballito
-                </span>
-              </button>
-            </Link>
-
-            <Link href="/admin/turnos?sedes=nunez" className="contents">
-              <button className="flex items-center gap-4 p-6 rounded-xl bg-[var(--color-surface)] border-2 border-[var(--color-border-subtle)] hover:border-[var(--color-primary)] hover:shadow-lg transition-all group cursor-pointer">
-                <div className="w-12 h-12 rounded-lg bg-[var(--color-primary-soft)] flex items-center justify-center group-hover:bg-[var(--color-primary)] transition-colors">
-                  <Building2 className="w-6 h-6 text-[var(--color-primary)] group-hover:text-white transition-colors" />
-                </div>
-                <span className="text-base font-semibold text-[var(--color-text-main)]">
-                  Sede Nuñez
-                </span>
-              </button>
-            </Link>
-          </div>
+          <SedesList />
 
           {/* Sección de Notas */}
           <Card>

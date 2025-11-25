@@ -10,6 +10,7 @@ import { isSuperAdmin } from '@/lib/auth'
 import Link from 'next/link'
 import { Plus, Shield } from 'lucide-react'
 import { Button } from '@repo/ui'
+import { UsuariosList } from './components/UsuariosList'
 
 interface PageProps {
   searchParams: {
@@ -106,54 +107,7 @@ export default async function SuperAdminUsuariosPage({ searchParams }: PageProps
       {/* Lista de Usuarios */}
       <div className="bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)]">
         <div className="p-6">
-          {usuarios && usuarios.length > 0 ? (
-            <div className="space-y-4">
-              {usuarios.map((usuario: any) => (
-                <div
-                  key={usuario.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-[var(--color-border)]"
-                >
-                  <div>
-                    <p className="font-medium text-[var(--color-text-main)]">
-                      {usuario.nombre} {usuario.apellido}
-                    </p>
-                    <p className="text-sm text-[var(--color-text-muted)]">
-                      {usuario.email}
-                    </p>
-                    {usuario.clubs && (
-                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                        Club: {usuario.clubs.nombre}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        usuario.role === 'SUPER_ADMIN'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      {usuario.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Club Admin'}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        usuario.activo
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {usuario.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[var(--color-text-muted)] text-center py-8">
-              No hay usuarios admin registrados
-            </p>
-          )}
+          <UsuariosList usuarios={usuarios || []} />
         </div>
       </div>
 

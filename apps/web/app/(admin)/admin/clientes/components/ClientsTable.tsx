@@ -10,6 +10,8 @@ import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Eye, Edit, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ClientStatusBadge } from '@repo/ui'
+import { deleteStudent } from '../actions'
+import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
 
 interface Cliente {
   id: string
@@ -131,6 +133,19 @@ export function ClientsTable({
                       <Edit className="w-4 h-4" />
                     </button>
                   </Link>
+                  <DeleteConfirmDialog
+                    title="Eliminar Cliente"
+                    message="¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer."
+                    itemName={`${cliente.nombre} ${cliente.apellido}`}
+                    onConfirm={async () => {
+                      const result = await deleteStudent(cliente.id)
+                      if (result.error) {
+                        throw new Error(result.error)
+                      }
+                      // Redirigir a la misma página para refrescar sin loops
+                      router.push(pathname)
+                    }}
+                  />
                 </div>
               </td>
             </tr>

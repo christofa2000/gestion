@@ -1,62 +1,70 @@
 /**
  * Página principal del panel SUPER_ADMIN
- * 
- * Dashboard con vista global de todos los clubs y estadísticas.
+ *
+ * V1: Dashboard con vista global de todos los clubs y estadísticas.
+ *
+ * Reglas V1:
+ * - Solo SUPER_ADMIN puede acceder (verificado en layout y middleware)
+ * - Ve TODOS los clubs sin filtrado por club_id
+ * - Puede crear nuevos clubs y usuarios CLUB_ADMIN
+ * - Puede crear profesionales globales o asociados a un club
  */
 
-import { redirect } from 'next/navigation'
-import { createClient, getUser } from '@repo/supabase/server'
-import { isSuperAdmin } from '@/lib/auth'
-import Link from 'next/link'
-import { Building2, Users, CreditCard, TrendingUp, Plus, Shield } from 'lucide-react'
-import { Button } from '@repo/ui'
+import { isSuperAdmin } from "@/lib/auth";
+import { createClient, getUser } from "@repo/supabase/server";
+import { Button } from "@repo/ui";
+import { Building2, CreditCard, Plus, Shield, Users } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function SuperAdminPage() {
-  const user = await getUser()
-  
+  const user = await getUser();
+
   if (!user || !isSuperAdmin(user)) {
-    redirect('/auth/login')
+    redirect("/auth/login");
   }
 
-  const supabase = await createClient()
-  
+  const supabase = await createClient();
+
   // Obtener estadísticas globales
   const [
     { count: totalClubs },
     { count: totalUsers },
     { count: totalStudents },
-    { data: paymentsData }
+    { data: paymentsData },
   ] = await Promise.all([
-    supabase.from('clubs').select('*', { count: 'exact', head: true }),
-    supabase.from('users').select('*', { count: 'exact', head: true }),
-    supabase.from('students').select('*', { count: 'exact', head: true }),
-    supabase.from('payments')
-      .select('monto')
-      .gte('fecha_pago', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-  ])
+    supabase.from("clubs").select("*", { count: "exact", head: true }),
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("students").select("*", { count: "exact", head: true }),
+    supabase
+      .from("payments")
+      .select("monto")
+      .gte(
+        "fecha_pago",
+        new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+      ),
+  ]);
 
-  const ingresosMes = paymentsData?.reduce((sum, p) => sum + (p.monto || 0), 0) || 0
+  const ingresosMes = paymentsData?.reduce((sum, p) => sum + (p.monto || 0), 0) || 0;
 
   // Obtener últimos clubs creados
   const { data: recentClubs } = await supabase
-    .from('clubs')
-    .select('id, nombre, created_at, activa')
-    .order('created_at', { ascending: false })
-    .limit(5)
+    .from("clubs")
+    .select("id, nombre, created_at, activa")
+    .order("created_at", { ascending: false })
+    .limit(5);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--color-text-main)]">
-            Panel Super Admin
-          </h1>
+          <h1 className="text-3xl font-bold text-[var(--color-text-main)]">Panel Super Admin</h1>
           <p className="text-[var(--color-text-muted)] mt-1">
             Gestión global de todos los clubs y usuarios
           </p>
         </div>
-        
+
         <div className="flex gap-2">
           <Link href="/superadmin/clubs/nuevo">
             <Button>
@@ -103,7 +111,9 @@ export default async function SuperAdminPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-[var(--color-text-muted)] mb-1">Total Alumnos</p>
-              <p className="text-3xl font-bold text-[var(--color-text-main)]">{totalStudents || 0}</p>
+              <p className="text-3xl font-bold text-[var(--color-text-main)]">
+                {totalStudents || 0}
+              </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
               <Users className="w-6 h-6 text-green-600" />
@@ -116,7 +126,7 @@ export default async function SuperAdminPage() {
             <div>
               <p className="text-sm text-[var(--color-text-muted)] mb-1">Ingresos del Mes</p>
               <p className="text-3xl font-bold text-[var(--color-text-main)]">
-                ${ingresosMes.toLocaleString('es-AR')}
+                ${ingresosMes.toLocaleString("es-AR")}
               </p>
             </div>
             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -145,18 +155,16 @@ export default async function SuperAdminPage() {
                   <div>
                     <p className="font-medium text-[var(--color-text-main)]">{club.nombre}</p>
                     <p className="text-sm text-[var(--color-text-muted)]">
-                      Creado: {new Date(club.created_at).toLocaleDateString('es-AR')}
+                      Creado: {new Date(club.created_at).toLocaleDateString("es-AR")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        club.activa
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-700'
+                        club.activa ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                       }`}
                     >
-                      {club.activa ? 'Activo' : 'Inactivo'}
+                      {club.activa ? "Activo" : "Inactivo"}
                     </span>
                   </div>
                 </Link>
@@ -195,7 +203,9 @@ export default async function SuperAdminPage() {
                 <Shield className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-[var(--color-text-main)]">Gestionar Usuarios Admin</h3>
+                <h3 className="font-semibold text-[var(--color-text-main)]">
+                  Gestionar Usuarios Admin
+                </h3>
                 <p className="text-sm text-[var(--color-text-muted)]">
                   Crear y administrar usuarios ADMIN
                 </p>
@@ -205,6 +215,5 @@ export default async function SuperAdminPage() {
         </Link>
       </div>
     </div>
-  )
+  );
 }
-

@@ -70,6 +70,12 @@ export function getClubId(user: AuthUser): string | null {
 /**
  * Redirigir usuario según su rol
  * 
+ * V1: Reglas de redirección:
+ * - SUPER_ADMIN → /superadmin
+ * - CLUB_ADMIN → /admin
+ * - PROFESSIONAL → /admin/turnos
+ * - STUDENT → /student
+ * 
  * @param user Usuario de Supabase
  * @throws {redirect} Redirecciona según el rol
  * 
@@ -89,6 +95,8 @@ export function redirectByRole(user: AuthUser): never {
 
   switch (role) {
     case 'SUPER_ADMIN':
+      redirect('/superadmin')
+      
     case 'CLUB_ADMIN':
       redirect('/admin')
       

@@ -33,7 +33,6 @@ export default async function AdminLayout({
   const nombre = user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario'
   const apellido = user.user_metadata?.apellido || ''
   const role = user.user_metadata?.role || 'CLUB_ADMIN'
-  const clubId = user.user_metadata?.club_id
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">

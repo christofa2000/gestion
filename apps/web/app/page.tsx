@@ -7,15 +7,24 @@ import { getUserRole } from "@/lib/auth";
 
 export default async function HomePage() {
   // Verificar si el usuario ya está autenticado
+  // V1: Redirigir según rol usando la misma lógica que redirectByRole
   const user = await getUser();
   
   if (user) {
     const role = getUserRole(user);
-    // Redirigir según el rol
-    if (role === 'SUPER_ADMIN' || role === 'CLUB_ADMIN' || role === 'PROFESSIONAL') {
-      redirect('/admin');
-    } else if (role === 'STUDENT') {
-      redirect('/student');
+    // Redirigir según el rol (consistente con redirectByRole en lib/auth.ts)
+    switch (role) {
+      case 'SUPER_ADMIN':
+        redirect('/superadmin');
+      case 'CLUB_ADMIN':
+        redirect('/admin');
+      case 'PROFESSIONAL':
+        redirect('/admin/turnos');
+      case 'STUDENT':
+        redirect('/student');
+      default:
+        // Si no tiene rol válido, dejar que vea la landing
+        break;
     }
   }
 

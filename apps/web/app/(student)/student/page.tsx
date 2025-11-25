@@ -1,7 +1,13 @@
 /**
  * Portal Alumno - Agenda
  * 
- * Página principal para alumnos donde pueden ver y reservar turnos.
+ * V1: Página principal para alumnos donde pueden ver y reservar turnos.
+ * 
+ * Reglas V1:
+ * - Solo usuarios con rol STUDENT pueden acceder (verificado en layout)
+ * - Los estudiantes solo pueden ver sus propios datos (filtrado por RLS)
+ * - No pueden crear ni editar alumnos, clubs, profesionales
+ * - Solo pueden ver su información y turnos/clases
  */
 
 import { Calendar, Clock, MapPin } from 'lucide-react'

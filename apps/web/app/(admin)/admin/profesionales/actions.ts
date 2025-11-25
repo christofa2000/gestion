@@ -124,3 +124,43 @@ export async function updateProfesional(profesionalId: string, data: Partial<Cre
   }
 }
 
+export async function deleteProfesional(profesionalId: string) {
+  try {
+    // Verificar autenticación
+    const user = await getUser()
+    if (!user) {
+      return { error: 'No autenticado' }
+    }
+
+    // Obtener club_id
+    const clubId = getClubId(user)
+    if (!clubId) {
+      return { error: 'No se pudo obtener el club del usuario' }
+    }
+
+    // Crear cliente de Supabase del servidor
+    const supabase = await createClient()
+
+    // Eliminar profesional (hard delete)
+    const { error: deleteError } = await supabase
+      .from('professionals')
+      .delete()
+      .eq('id', profesionalId)
+      .eq('club_id', clubId) // Asegurar que solo se elimine del club del usuario
+
+    if (deleteError) {
+      console.error('Error deleting profesional:', deleteError)
+      return { error: deleteError.message || 'Error al eliminar el profesional' }
+    }
+
+    // Revalidar páginas
+    revalidatePath('/admin/profesionales')
+
+    return { success: true, error: null }
+  } catch (error) {
+    const err = error as Error
+    console.error('Error in deleteProfesional:', err)
+    return { error: err.message || 'Error al eliminar el profesional' }
+  }
+}
+

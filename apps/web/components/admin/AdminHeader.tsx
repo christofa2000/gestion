@@ -45,10 +45,12 @@ export default function AdminHeader({ userName, userRole, userEmail }: AdminHead
     try {
       await supabase.auth.signOut();
       logout();
-      router.push("/auth/login");
-      router.refresh();
+      // Usar window.location en lugar de router para evitar loops
+      window.location.href = "/auth/login";
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
+      // Aún así redirigir al login
+      window.location.href = "/auth/login";
     }
   };
 

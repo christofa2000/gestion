@@ -74,3 +74,4 @@ WHERE table_schema = 'public'
     AND table_name = 'students'
     AND grantee IN ('authenticated', 'postgres', 'service_role');
 
+

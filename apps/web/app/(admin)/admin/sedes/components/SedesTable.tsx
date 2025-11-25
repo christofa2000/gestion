@@ -10,6 +10,8 @@ import Link from 'next/link'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Eye, Edit, ChevronLeft, ChevronRight, Building2 } from 'lucide-react'
 import { Badge } from '@repo/ui'
+import { deleteSede } from '../actions'
+import { DeleteConfirmDialog } from '@/components/admin/DeleteConfirmDialog'
 
 interface Sede {
   id: string
@@ -131,6 +133,19 @@ export function SedesTable({
                       <Edit className="w-4 h-4" />
                     </button>
                   </Link>
+                  <DeleteConfirmDialog
+                    title="Eliminar Sede"
+                    message="¿Estás seguro de que deseas eliminar esta sede? Se desactivará y no se podrá usar en nuevos turnos."
+                    itemName={sede.nombre}
+                    onConfirm={async () => {
+                      const result = await deleteSede(sede.id)
+                      if (result.error) {
+                        throw new Error(result.error)
+                      }
+                      // Redirigir a la misma página para refrescar sin loops
+                      router.push(pathname)
+                    }}
+                  />
                 </div>
               </td>
             </tr>

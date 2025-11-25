@@ -55,12 +55,21 @@ export default function RegisterPage() {
   // ========================================
   // HANDLER DE REGISTRO
   // ========================================
+  // V1: Flujo de registro público
+  // - Todos los usuarios que se registran por la web tienen rol STUDENT por defecto
+  // - Supabase Auth envía automáticamente un email de confirmación
+  // - El usuario NO puede iniciar sesión hasta que confirme su email
+  // - Solo SUPER_ADMIN puede crear usuarios con otros roles (CLUB_ADMIN, PROFESSIONAL)
+  // ========================================
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
     setError(null)
 
     try {
       // 1. Registrar en Supabase Auth
+      // Nota: Supabase Auth requiere verificación de email por defecto
+      // El usuario recibirá un email con un enlace de confirmación
+      // No podrá iniciar sesión hasta que confirme su email
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -68,8 +77,8 @@ export default function RegisterPage() {
           data: {
             nombre: data.nombre,
             apellido: data.apellido,
-            role: 'STUDENT', // Por defecto, todos los registros son estudiantes
-            club_id: null, // Se asignará cuando se una a un club
+            role: 'STUDENT', // V1: Por defecto, todos los registros públicos son estudiantes
+            club_id: null, // Se asignará cuando se una a un club (por un ADMIN)
           },
         },
       })
@@ -125,11 +134,15 @@ export default function RegisterPage() {
             <h2 className="text-2xl font-bold text-[var(--color-text-main)] mb-4">
               ¡Registro Exitoso!
             </h2>
-            <p className="text-[var(--color-text-muted)] mb-6">
-              Tu cuenta ha sido creada exitosamente.
-              {'\n'}
-              Revisa tu email para confirmar tu cuenta.
+            <p className="text-[var(--color-text-muted)] mb-4">
+              Tu cuenta ha sido creada exitosamente con rol <strong>STUDENT</strong>.
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-blue-800">
+                <strong>Importante:</strong> Revisa tu email y haz clic en el enlace de confirmación 
+                para activar tu cuenta. No podrás iniciar sesión hasta que confirmes tu email.
+              </p>
+            </div>
             <p className="text-sm text-[var(--color-text-muted)]">
               Redirigiendo al login...
             </p>

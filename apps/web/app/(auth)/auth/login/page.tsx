@@ -99,12 +99,16 @@ export default function LoginPage() {
       }
 
       // Redirigir según rol o a la página que intentaba acceder
+      // V1: Reglas de redirección consistentes con redirectByRole
       if (redirectTo) {
+        // Si hay un redirect específico y el usuario tiene permisos, usarlo
         router.push(redirectTo)
       } else {
-        // Redirigir según rol
+        // Redirigir según rol (consistente con redirectByRole en lib/auth.ts)
         switch (role) {
           case 'SUPER_ADMIN':
+            router.push('/superadmin')
+            break
           case 'CLUB_ADMIN':
             router.push('/admin')
             break

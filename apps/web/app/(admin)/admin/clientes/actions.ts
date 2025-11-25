@@ -138,3 +138,44 @@ export async function updateStudent(studentId: string, data: Partial<CreateStude
   }
 }
 
+export async function deleteStudent(studentId: string) {
+  try {
+    // Verificar autenticación
+    const user = await getUser()
+    if (!user) {
+      return { error: 'No autenticado' }
+    }
+
+    // Obtener club_id
+    const clubId = getClubId(user)
+    if (!clubId) {
+      return { error: 'No se pudo obtener el club del usuario' }
+    }
+
+    // Crear cliente de Supabase del servidor
+    const supabase = await createClient()
+
+    // Eliminar estudiante (soft delete: marcar como eliminado o hard delete según corresponda)
+    // V1: Hard delete por ahora, se puede cambiar a soft delete si se agrega campo deleted_at
+    const { error: deleteError } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', studentId)
+      .eq('club_id', clubId) // Asegurar que solo se elimine del club del usuario
+
+    if (deleteError) {
+      console.error('Error deleting student:', deleteError)
+      return { error: deleteError.message || 'Error al eliminar el estudiante' }
+    }
+
+    // Revalidar páginas
+    revalidatePath('/admin/clientes')
+
+    return { success: true, error: null }
+  } catch (error) {
+    const err = error as Error
+    console.error('Error in deleteStudent:', err)
+    return { error: err.message || 'Error al eliminar el estudiante' }
+  }
+}
+

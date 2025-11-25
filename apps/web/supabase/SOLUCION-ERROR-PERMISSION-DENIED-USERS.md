@@ -108,3 +108,4 @@ CREATE POLICY "Usuarios pueden ver usuarios de su club"
 - El `SET search_path = public` asegura que las funciones busquen en el schema correcto
 - `STABLE` indica que la función no modifica datos y puede ser optimizada
 
+

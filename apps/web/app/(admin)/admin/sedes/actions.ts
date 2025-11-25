@@ -152,3 +152,47 @@ export async function updateSede(sedeId: string, data: Partial<CreateSedeData>) 
   }
 }
 
+export async function deleteSede(sedeId: string) {
+  try {
+    // Verificar autenticación
+    const user = await getUser()
+    if (!user) {
+      return { error: 'No autenticado' }
+    }
+
+    // Obtener club_id
+    const clubId = getClubId(user)
+    if (!clubId) {
+      return { error: 'No se pudo obtener el club del usuario' }
+    }
+
+    // Crear cliente de Supabase del servidor
+    const supabase = await createClient()
+
+    // Nota: En V1, las sedes están en la tabla clubs, pero en el futuro pueden estar en branches
+    // Por ahora, solo se puede desactivar la sede (soft delete)
+    const { error: updateError } = await supabase
+      .from('clubs')
+      .update({
+        activa: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', sedeId)
+      .eq('id', clubId) // Asegurar que solo se actualice la sede del club actual
+
+    if (updateError) {
+      console.error('Error deleting sede:', updateError)
+      return { error: updateError.message || 'Error al eliminar la sede' }
+    }
+
+    // Revalidar páginas
+    revalidatePath('/admin/sedes')
+
+    return { success: true, error: null }
+  } catch (error) {
+    const err = error as Error
+    console.error('Error in deleteSede:', err)
+    return { error: err.message || 'Error al eliminar la sede' }
+  }
+}
+

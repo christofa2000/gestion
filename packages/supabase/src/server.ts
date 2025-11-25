@@ -83,17 +83,28 @@ export async function getSession() {
 /**
  * Obtener el usuario actual del servidor
  * Retorna null si no hay usuario autenticado
+ * 
+ * V1: Manejo mejorado de errores para evitar loops infinitos
  */
 export async function getUser() {
-  const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
-  
-  if (error) {
-    console.error('Error getting user:', error)
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error) {
+      // No loguear errores de sesión faltante para evitar spam en consola
+      if (error.message?.includes('session') || error.message?.includes('Auth session missing')) {
+        return null
+      }
+      console.error('Error getting user:', error)
+      return null
+    }
+    
+    return user
+  } catch (error) {
+    // Capturar cualquier error inesperado
     return null
   }
-  
-  return user
 }
 
 /**

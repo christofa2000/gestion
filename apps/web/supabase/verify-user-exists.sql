@@ -62,3 +62,4 @@ WHERE au.email = 'christofa2000@gmail.com'  -- Tu email
 ORDER BY au.created_at DESC
 LIMIT 1;
 
+
